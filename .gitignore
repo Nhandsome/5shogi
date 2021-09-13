@@ -12,3 +12,6 @@ temp/
 python_shogi.egg-info/
 nosetests.xml
 docs/_build/
+*.csa
+.DS_Store
+
