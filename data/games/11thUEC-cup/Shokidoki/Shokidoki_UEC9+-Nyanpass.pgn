@@ -1,0 +1,30 @@
+[Event "UEC Cup 11"]
+[Site "MYCOMPUTER"]
+[Date "2019.03.10"]
+[Round "-"]
+[White "Shokidoki UEC9+"]
+[Black "Nyanpass"]
+[Result "1-0"]
+[TimeControl "1200"]
+[Variant "shogi"]
+[FEN "rbsgk/4p/5/P4/KGSBR[-] w 0 1"]
+[SetUp "1"]
+
+{--------------
+r b s g k
+. . . . p
+. . . . .
+P . . . .
+K G S B R
+white to play
+--------------}
+1. Bb3 Bc4 2. Bc2 Sb4 3. Sd2 Gd4 4. Gb2 Rb5 5. Bb1 Bd5 6. Sd3 Sc3 7. Sxd4
+{-1.28/16 34} Sxd4 8. G@c4 Bxc4 9. Rxe4 Kd5 10. Rxd4 Kxd4 11. S@c3 Ke3 12.
+Sxc4 Rxb2 13. Kxb2 R@d2 14. Ka3 S@b2 15. Kb4 Sxb1+ 16. R@b3 Ke2 17. B@d3
+Kd1 18. Rxb1 G@c1 19. Rxc1 {+10.60/17 2:25} Kxc1 20. G@b1 {+11.16/18 1:48}
+Kd1 21. S@c2 {+11.20/19 33} Ke1 22. Gc1 {+16.60/19 2:03} Rxc2 23. Bxc2
+{+34.52/13 18} R@b2 24. Gxb2 {-400.00/15} B@d2 25. Kb5 {+399.68/15} G@b4
+26. Kc5 {+399.72/13 0.3} Gxc4 27. Kxc4 {+399.76/11 0.2} S@d3 28. Bxd3
+{+399.80/9}
+{Black resigns} 1-0
+

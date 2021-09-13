@@ -32,18 +32,14 @@ SOCKET_RECV_SIZE = 4096
 BLOCK_RECV_SLEEP_DURATION = 0.1
 
 COLOR_SYMBOLS = ['+', '-']
-PIECE_SYMBOLS = ['* ', 'FU', 'KY', 'KE', 'GI', 'KI', 'KA', 'HI', 'OU',
-                       'TO', 'NY', 'NK', 'NG',       'UM', 'RY']
+PIECE_SYMBOLS = ['* ', 'FU', 'GI', 'KI', 'KA', 'HI', 'OU',
+                       'TO', 'NG',       'UM', 'RY']
 SQUARE_NAMES = [
-    '91', '81', '71', '61', '51', '41', '31', '21', '11',
-    '92', '82', '72', '62', '52', '42', '32', '22', '12',
-    '93', '83', '73', '63', '53', '43', '33', '23', '13',
-    '94', '84', '74', '64', '54', '44', '34', '24', '14',
-    '95', '85', '75', '65', '55', '45', '35', '25', '15',
-    '96', '86', '76', '66', '56', '46', '36', '26', '16',
-    '97', '87', '77', '67', '57', '47', '37', '27', '17',
-    '98', '88', '78', '68', '58', '48', '38', '28', '18',
-    '99', '89', '79', '69', '59', '49', '39', '29', '19',
+    '51', '41', '31', '21', '11',
+    '52', '42', '32', '22', '12',
+    '53', '43', '33', '23', '13',
+    '54', '44', '34', '24', '14',
+    '55', '45', '35', '25', '15',
 ]
 SERVER_MESSAGE_SYMBOLS = [
     # '#' prefixed
@@ -63,7 +59,7 @@ SERVER_MESSAGES = [
 class Parser:
     @staticmethod
     def parse_file(path):
-        with open(path) as f:
+        with open(path, encoding='utf-8-sig') as f:
             return Parser.parse_str(f.read())
 
     @staticmethod
@@ -177,7 +173,7 @@ class Parser:
         # ex.) P1-KY-KE-GI-KI-OU-KI-GI-KE-KY
         # ex.) PI82HI22KA
         position = {
-            'pieces': [None for x in range(81)],
+            'pieces': [None for x in range(25)],
             'pieces_in_hand': [
                 collections.Counter(),
                 collections.Counter(),
@@ -210,12 +206,12 @@ class Parser:
                         position['pieces_in_hand'][color][piece_type] += 1
                     else:
                         position['pieces'][
-                            (rank_index - 1) * 9 + (9 - file_index)
+                            (rank_index - 1) * 5 + (5 - file_index)
                         ] = (piece_type, color)
-            elif line[1] in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
+            elif line[1] in ['1', '2', '3', '4', '5']:
                 rank_index = int(line[1:2]) - 1
                 file_index = 0
-                for index in range(2, 29, 3):
+                for index in range(2, 17, 3):
                     piece_str = line[index:index + 3]
                     piece_type = PIECE_SYMBOLS.index(piece_str[1:3])
                     if piece_type:
@@ -225,21 +221,17 @@ class Parser:
                         piece = None
 
                     position['pieces'][
-                        rank_index * 9 + file_index
+                        rank_index * 5 + file_index
                     ] = piece
 
                     file_index += 1
             elif line[1] == 'I': # PI
                 position['pieces'] = [
-                        (2, 1), (3, 1), (4, 1), (5, 1), (8, 1), (5, 1), (4, 1), (3, 1), (2, 1),
-                          None, (7, 1),   None,   None,   None,   None,   None, (6, 1),   None,
-                        (1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1),
-                          None,   None,   None,   None,   None,   None,   None,   None,   None,
-                          None,   None,   None,   None,   None,   None,   None,   None,   None,
-                          None,   None,   None,   None,   None,   None,   None,   None,   None,
-                        (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (1, 0),
-                          None, (6, 0),   None,   None,   None,   None,   None, (7, 0),   None,
-                        (2, 0), (3, 0), (4, 0), (5, 0), (8, 0), (5, 0), (4, 0), (3, 0), (2, 0),
+                        (5, 1), (4, 1), (2, 1), (3, 1), (6, 1),
+                          None,   None,   None,   None, (1, 1),
+                          None,   None,   None,   None,   None,
+                        (1, 0),   None,   None,   None,   None,
+                        (6, 0), (3, 0), (2, 0), (4, 0), (5, 0),
                     ]
                 index = 2
                 while index < len(line):
@@ -252,7 +244,7 @@ class Parser:
                     if rank_index == 0 and file_index == 0:
                         # piece in hand
                         raise NotImplementedError('TODO: Not implemented komaochi in komadai')
-                    piece_index = (rank_index - 1) * 9 + (9 - file_index)
+                    piece_index = (rank_index - 1) * 10 + (5 - file_index)
                     if position['pieces'][piece_index] is None or position['pieces'][piece_index][0] != piece_type:
                         raise ValueError('Invalid piece removing on intializing a board'.format(line))
                     position['pieces'][piece_index] = None
@@ -289,7 +281,7 @@ class Exporter:
                     sfen.append(str(empty))
                     empty = 0
 
-                if square != shogi.I1:
+                if square != shogi.E1:
                     sfen.append('/')
 
         sfen.append(' ')
@@ -578,3 +570,27 @@ class CSAHeartbeat(threading.Thread):
 
         self.ping_timer += self.sleep_duration
         time.sleep(self.sleep_duration)
+
+# if __name__ == '__main__':
+#     from shogi import CSA
+
+#     TEST_CSA = """'----------棋譜ファイルの例"example.csa"-----------------
+# V2.2
+# N+Fairy-Stockfish
+# N-Lima v6.0
+# P1-HI-KA-GI-KI-OU
+# P2 *  *  *  * -FU
+# P3 *  *  *  *  * 
+# P4+FU *  *  *  * 
+# P5+OU+KI+GI+KA+HI
+# +
+# +2534KA
+# -4132KA
+# +4544KI
+# -2122KI
+# %TORYO
+# '---------------------------------------------------------
+# """
+
+    # result = CSA.Parser.parse_str(TEST_CSA)
+    # print(result)

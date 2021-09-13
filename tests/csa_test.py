@@ -63,7 +63,23 @@ T6
 %TORYO
 '---------------------------------------------------------
 """
-
+TEST_CSA = """'----------棋譜ファイルの例"example.csa"-----------------
+V2.2
+N+Fairy-Stockfish
+N-Lima v6.0
+P1-HI-KA-GI-KI-OU
+P2 *  *  *  * -FU
+P3 *  *  *  *  * 
+P4+FU *  *  *  * 
+P5+OU+KI+GI+KA+HI
++
++2534KA
+-4132KA
++4544KI
+-2122KI
+%TORYO
+'---------------------------------------------------------
+"""
 TEST_CSA_SUMMARY = {'moves': ['2g2f', '3c3d', '7g7f'], 'sfen': 'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1', 'names': ['NAKAHARA', 'YONENAGA'], 'win': 'b'}
 
 TEST_CSA_WITH_PI = '''

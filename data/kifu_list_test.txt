@@ -1,0 +1,7 @@
+./data/csa_files/Lima_ShibauraShoSho.csa
+./data/csa_files/erweitern_55-GoGoauaushogi.csa
+./data/csa_files/erweitern_55-Fairy-Stockfish.csa
+./data/csa_files/Gasyou-Lima.csa
+./data/csa_files/Gasyou-Shokidoki.csa
+./data/csa_files/ShibauraShoSho_Lima.csa
+./data/csa_files/NDHU_Polygames-Shokidoki.csa

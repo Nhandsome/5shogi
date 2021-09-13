@@ -1,0 +1,31 @@
+[Event "UEC Cup 11"]
+[Site "MYCOMPUTER"]
+[Date "2019.03.10"]
+[Round "-"]
+[White "Fairy-Stockfish 190219 64 (UCI2WB)"]
+[Black "Gasyou"]
+[Result "1-0"]
+[TimeControl "1200"]
+[Variant "shogi"]
+[FEN "rbsgk/4p/5/P4/KGSBR[-] w 0 1"]
+[SetUp "1"]
+
+{--------------
+r b s g k
+. . . . p
+. . . . .
+P . . . .
+K G S B R
+white to play
+--------------}
+1. Bc2 {-0.12/27} Bc4 2. Gb2 {+1.01/26 20} Sd4 3. Sd2 {+1.36/31 1:09} Rb5
+4. Kb1 {+2.01/28 16} Rc5 5. a3 {+0.60/32 11} Rb5 6. a4 {+3.21/25 14} Rc5 7.
+Ga3 {+7.41/24 16} Rb5 8. Kc1 {+10.74/24 17} Se3 9. Sxe3 {+16.75/29 0.1}
+exe3 10. Rxe3 {+17.46/23 0.3} Kd4 11. P@b4 {+17.64/24 5} Kxe3 12. S@d2
+{+18.42/23 6} Kd4 13. bxb5+ {+20.12/25 1:10} S@e1 14. R@d3 {+1000.10/37 15}
+Ke5 15. Re3 {+1000.09/44 0.1} R@e4 16. Bxe4 {+1000.08/50 19} Sxd2= 17. Kxd2
+{+1000.07/60 22} S@c3 18. Rxc3 {+1000.06/59 19} Gd4 19. R@c5
+{+1000.04/75 16} Bd5 20. Bxd5+ {+1000.03/127 0.4} Gxd5 21. Re3
+{+1000.02/127 0.1} B@e4 22. B@a1# {+1000.01/127}
+{Xboard adjudication: Checkmate} 1-0
+

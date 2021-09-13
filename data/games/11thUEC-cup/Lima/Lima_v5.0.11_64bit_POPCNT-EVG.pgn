@@ -1,0 +1,30 @@
+[Event "UEC Cup 11"]
+[Site "MYCOMPUTER"]
+[Date "2019.03.09"]
+[Round "-"]
+[White "Lima v5.0.11 64bit POPCNT"]
+[Black "EVG"]
+[Result "*"]
+[TimeControl "1200"]
+[Variant "shogi"]
+[FEN "rbsgk/4p/5/P4/KGSBR[-] w 0 1"]
+[SetUp "1"]
+
+{--------------
+r b s g k
+. . . . p
+. . . . .
+P . . . .
+K G S B R
+white to play
+--------------}
+1. Bb3 {-0.69/27} Sc4 2. Bxc4 {-0.07/26 57} Gxc4 3. Sb2 {+1.23/26 46} B@d4
+4. Rc1 {+1.07/24 52} Kd5 5. Rxc4 {+3.40/21 49} Bxc4 6. S@c3 {+5.63/20 47}
+Bxc3 7. Sxc3 {+4.13/17 7} Rxa2 8. Gxa2 {-1.55/4 0.2} R@c1 9. Kb2
+{+7.45/20 1:09} Rxc3+ 10. Kxc3 {+7.47/16 24} S@d4 11. Kb2 {+8.45/17 39}
+S@b4 12. Ka1 {+7.61/17 37} Bxa2 13. Kxa2 {+8.64/14 4} G@b3 14. Ka1
+{+10.07/17 33} P@a2 15. Kb1 {+7.60/3} Sd3 16. R@a5 {+18.41/19 33} Sxa5 17.
+R@b5 {+15.12/16 32} R@c5 18. Rxb3+ {+18.36/15 30} a1+ 19. Kxa1
+{+29.73/17 29}
+*
+

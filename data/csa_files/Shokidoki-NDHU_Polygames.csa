@@ -1,0 +1,60 @@
+V2.2
+N+Shokidoki
+N-NDHU Polygames
+P1-HI-KA-GI-KI-OU
+P2 *  *  *  * -FU
+P3 *  *  *  *  * 
+P4+FU *  *  *  * 
+P5+OU+KI+GI+KA+HI
++
++2543KA
+-4132KA
++4334KA
+-2122KI
++4544KI
+-3221KA
++1525HI
+-5141HI
++3445KA
+-2232KI
++4434KI
+-3122GI
++3544GI
+-3231KI
++5453FU
+-3132KI
++5352FU
+-4142HI
++5251TO
+%TORYO
+'
+' Current board:
+'    A| B| C| D| E
+' 5   |  |  | b| k
+' 4  P| r| g| s| p
+' 3   |  |  |  |  
+' 2   | S| G|  |  
+' 1  K| B|  | R|  
+' MiniWhite:  K  G  S  B  R  P 
+' MiniBlack:  k  g  s  b  r  p 
+'
+' Legal Actions:
+'  K (A, 1) to (A, 2) ---0
+'  G (C, 2) to (D, 2) ---1
+'  G (C, 2) to (D, 3) ---2
+'  G (C, 2) to (C, 3) ---3
+'  G (C, 2) to (B, 3) ---4
+'  G (C, 2) to (C, 1) ---5
+'  S (B, 2) to (C, 3) ---6
+'  S (B, 2) to (B, 3) ---7
+'  S (B, 2) to (A, 3) ---8
+'  S (B, 2) to (C, 1) ---9
+'  B (B, 1) to (A, 2) ---10
+'  R (D, 1) to (E, 1) ---11
+'  R (D, 1) to (D, 2) ---12
+'  R (D, 1) to (D, 3) ---13
+'  R (D, 1) to (D, 4) ---14
+'  R (D, 1) to (C, 1) ---15
+'  P (A, 4) to (A, 5) ---16
+'
+' Input format: action index e.g. 0

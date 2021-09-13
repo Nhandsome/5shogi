@@ -32,40 +32,28 @@ class BoardTestCase(unittest.TestCase):
         self.assertEqual(board_none.turn, shogi.BLACK)
 
     def test_stalemate(self):
-        board = shogi.Board('+R+N+SGKG+S+N+R/+B+N+SG+LG+S+N+B/P+LPP+LPP+LP/1P2P2P1/9/9/9/9/6k2 b - 200')
+        board = shogi.Board('K2s1/P4/g3+b/1rrk1/2+p+sg b b 207')
         self.assertEqual(len(board.pseudo_legal_moves), 0)
 
     def test_bishop_center(self):
-        board = shogi.Board('9/9/9/9/4B4/9/9/9/9 b - 1')
-        self.assertTrue(shogi.Move.from_usi('5e4d') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e3c') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e2b') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e1a') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e6f') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e7g') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e8h') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e9i') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e4f') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e3g') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e2h') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e1i') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e6d') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e7c') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e8b') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e9a') in board.legal_moves)
+        board = shogi.Board('5/5/2B2/5/5 b - 1')
+        self.assertTrue(shogi.Move.from_usi('3c4b') in board.legal_moves)
+        self.assertTrue(shogi.Move.from_usi('3c5a') in board.legal_moves)
+        self.assertTrue(shogi.Move.from_usi('3c2b') in board.legal_moves)
+        self.assertTrue(shogi.Move.from_usi('3c1a') in board.legal_moves)
+        self.assertTrue(shogi.Move.from_usi('3c4d') in board.legal_moves)
+        self.assertTrue(shogi.Move.from_usi('3c5e') in board.legal_moves)
+        self.assertTrue(shogi.Move.from_usi('3c2b') in board.legal_moves)
+        self.assertTrue(shogi.Move.from_usi('3c1e') in board.legal_moves)
+        
+        self.assertTrue(shogi.Move.from_usi('3c5a+') in board.legal_moves)
+        self.assertTrue(shogi.Move.from_usi('3c1a+') in board.legal_moves)
 
-        self.assertTrue(shogi.Move.from_usi('5e3c+') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e2b+') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e1a+') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e7c+') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e8b+') in board.legal_moves)
-        self.assertTrue(shogi.Move.from_usi('5e9a+') in board.legal_moves)
-
-        self.assertEqual(len(board.legal_moves), 22)
+        self.assertEqual(len(board.legal_moves), 10)
 
     def test_bishop_9a(self):
-        board = shogi.Board('B8/9/9/9/9/9/9/9/9 b - 1')
-        self.assertEqual(len(board.legal_moves), 16)
+        board = shogi.Board('B4/5/5/5/5 b - 1')
+        self.assertEqual(len(board.legal_moves), 8)
 
     def test_double_pawn_in_a_row(self):
         board = shogi.Board('k8/9/9/9/9/9/9/9/P8 b P 1')

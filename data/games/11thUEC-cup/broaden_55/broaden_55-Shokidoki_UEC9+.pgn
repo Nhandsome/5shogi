@@ -1,0 +1,32 @@
+[Event "UEC Cup 11"]
+[Site "MYCOMPUTER"]
+[Date "2019.03.09"]
+[Round "-"]
+[White "taito"]
+[Black "Shokidoki UEC9+"]
+[Result "0-1"]
+[TimeControl "1200"]
+[Variant "shogi"]
+[FEN "rbsgk/4p/5/P4/KGSBR[-] w 0 1"]
+[SetUp "1"]
+
+{--------------
+r b s g k
+. . . . p
+. . . . .
+P . . . .
+K G S B R
+white to play
+--------------}
+1. Gb2 Bc4 2. Bc2 Gd4 3. Rd1 Rb5 4. Bb1 Bd5 5. Gc2 Gc4 6. a3 Sd4 7. Ba2 Rb4
+8. Rd2 Gc5 9. Bxd5= Gxd5 10. B@a2 B@c4 11. Bxc4 Gxc4 12. B@a2 Gc5 13. Sb2
+B@e1 14. Rd1 Rxb2 15. Gxb2 Bb4+ 16. Rb1 +Bd2 {+1.48/18 56} 17. R@d1 +Bxd1
+{-400.00/21} 18. Rxd1 S@c3 {-400.00/19 2:55} 19. Gb1 R@a5 {-400.00/20 4:12}
+20. B@e1 Rxa3 {+3.68/15 21} 21. Bxc3 Rxc3 {+4.36/19 0.2} 22. S@b2 Re3
+{+5.96/17 28} 23. Rc1 Gb4 {-400.00/18 2:54} 24. Gc2 P@a3 {-400.00/17 2:08}
+25. Bb3 Re2 {+48.16/16 26} 26. Gd3 Gxb3 {+399.56/13 4} 27. Gxd4 Kxd4
+{+0.00/1 0.1} 28. S@c3 Ke5 {+399.80/9} 29. Sxb3 G@a2 {+399.84/7 0.2} 30.
+Sxa2 axa2 {+399.88/5 0.1} 31. Kb1 a1+ {+399.92/3 0.1} 32. Kxa1 S@a2#
+{+399.96/1 0.1}
+{Xboard adjudication: Checkmate} 0-1
+
