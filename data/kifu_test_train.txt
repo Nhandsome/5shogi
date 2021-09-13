@@ -1,6 +1,0 @@
-./data/games/Fairy-Stockfish-erweitern_55.csa
-./data/games/Fairy-Stockfish-Gasyou.csa
-./data/games/Fairy-Stockfish-NDHU_Polygames.csa
-./data/games/Fairy-Stockfish-ShioRamen.csa
-./data/games/Fairy-Stockfish-Shokidoki.csa
-./data/games/Fairy-Stockfish-Lima.csa

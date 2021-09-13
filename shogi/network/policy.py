@@ -64,4 +64,10 @@ class PolicyNetwork(nn.Module):
     
 #     print(f'TEST_OUTPUT_1 SHAPE : {y1.shape}')
 
-#     print(F.softmax(y1,1)[1])
+#     # print(F.softmax(y1,1)[1])
+
+#     logits = y1.data[0].to('cpu')
+#     probabilities = F.softmax(y1,dim=1).data[0]
+
+#     print(logits.shape)
+#     print(probabilities.shape)
