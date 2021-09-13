@@ -10,8 +10,8 @@ from shogi.features import *
 from shogi.network.policy import *
 from shogi.player.base_player import *
 
-# device = 'cuda' if torch.cuda.is_available else 'cpu'
-device = 'cpu'
+device = 'cuda' if torch.cuda.is_available else 'cpu'
+
 
 def greedy(logits):
   return logits.index(max(logits))
