@@ -33,7 +33,7 @@ def read_kifu(kifu_list_file):
                 board.push_usi(move)
     return positions
 
-if __name__ == '__main__':
-    import os
-    print(os.getcwd())
-    read_kifu('./data/kifu_list_train.txt')
+# if __name__ == '__main__':
+#     import os
+#     print(os.getcwd())
+#     read_kifu('./data/kifu_list_train.txt')

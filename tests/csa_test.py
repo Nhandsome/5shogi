@@ -224,4 +224,5 @@ class TCPProtocolTest(unittest.TestCase):
         self.assertEqual(spend_time, None)
 
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
+    print(shogi.Board())

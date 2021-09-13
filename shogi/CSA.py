@@ -41,6 +41,7 @@ SQUARE_NAMES = [
     '54', '44', '34', '24', '14',
     '55', '45', '35', '25', '15',
 ]
+
 SERVER_MESSAGE_SYMBOLS = [
     # '#' prefixed
     'WIN', 'LOSE', 'DRAW', 'SENNICHITE', 'OUTE_SENNICHITE',
@@ -571,6 +572,59 @@ class CSAHeartbeat(threading.Thread):
         self.ping_timer += self.sleep_duration
         time.sleep(self.sleep_duration)
 
+class CsaWriter:
+    def __init__(self, path=None, append=False):
+        if path:
+            self.open(path, append)
+        else:
+            self.f = None
+
+    def open(self, path, append=False):
+        self.f = open(path, 'a' if append else 'w', newline='\n')
+
+    def close(self):
+        self.f.close()
+
+    def info(self, names=None, comments=None, version=None):
+        if self.f.tell() != 0:
+            self.f.write('/\n')
+        if version:
+                self.f.write(version)
+                self.f.write('\n')
+        if names:
+            for name, turn in zip(names, ['+', '-']):
+                self.f.write('N' + turn + name)
+                self.f.write('\n')
+        if comments:
+            for comment in comments:
+                self.f.write("'")
+                self.f.write(comment)
+                self.f.write('\n')
+
+        csa_pos = 'P1-HI-KA-GI-KI-OU\nP2 *  *  *  * -FU\nP3 *  *  *  *  * \nP4+FU *  *  *  * \nP5+OU+KI+GI+KA+HI\n+\n'
+        self.f.write(csa_pos)
+        self.turn = 0
+
+    def move(self, move_csa, piece_csa, time=None, comment=None, sep='\n'):
+        self.f.write(COLOR_SYMBOLS[self.turn])
+        self.f.write(move_csa+piece_csa)
+        if time is not None:
+            self.f.write(sep)
+            self.f.write('T' + str(time))
+        if comment:
+            self.f.write(sep)
+            self.f.write("'" + comment)
+        self.f.write('\n')
+        self.turn ^= 1
+
+    def endgame(self, endgame):
+        self.f.write(endgame)
+        self.f.write('\n')
+        self.f.flush()
+
+
+
+
 # if __name__ == '__main__':
 #     from shogi import CSA
 
@@ -591,6 +645,28 @@ class CSAHeartbeat(threading.Thread):
 # %TORYO
 # '---------------------------------------------------------
 # """
+#     path = './data/csa_train/test.csa'
+#     name = ['Player1', 'Random']
 
-    # result = CSA.Parser.parse_str(TEST_CSA)
-    # print(result)
+#     test_board = shogi.Board()
+
+#     #INIT
+#     test = CsaWriter()
+#     test.open(path)
+#     test.info(names=name)
+
+#     temp = '5e4d'
+#     test_board.push_usi(temp)
+#     move_csa, piece_csa = shogi.move_to_csa(temp, test_board)
+#     piece_csa = PIECE_SYMBOLS[piece_csa]
+#     test.move(move_csa, piece_csa)
+
+#     temp = '5a5b'
+#     test_board.push_usi(temp)
+#     move_csa, piece_csa = shogi.move_to_csa(temp, test_board)
+#     piece_csa = PIECE_SYMBOLS[piece_csa]
+#     test.move(move_csa, piece_csa)
+
+#     test.endgame('%TORYO')
+
+#     print(test_board)

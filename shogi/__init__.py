@@ -64,8 +64,6 @@ PIECE_PROMOTED = [
 ]
 
 NUMBER_JAPANESE_NUMBER_SYMBOLS = [
-    # '０', '１', '２', '３', '４', 
-    # '５', '６', '７', '８', '９'
     '０', '１', '２', '３', '４', '5'
 ]
 NUMBER_JAPANESE_KANJI_SYMBOLS = [ #TODO
@@ -74,20 +72,6 @@ NUMBER_JAPANESE_KANJI_SYMBOLS = [ #TODO
     '十', '十一', '十二', '十三', '十四',
     '十五', '十六', '十七', '十八'
 ]
-
-# STARTING_SFEN = 'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1'
-
-# SQUARES = [
-#     A9, A8, A7, A6, A5, A4, A3, A2, A1,
-#     B9, B8, B7, B6, B5, B4, B3, B2, B1,
-#     C9, C8, C7, C6, C5, C4, C3, C2, C1,
-#     D9, D8, D7, D6, D5, D4, D3, D2, D1,
-#     E9, E8, E7, E6, E5, E4, E3, E2, E1,
-#     F9, F8, F7, F6, F5, F4, F3, F2, F1,
-#     G9, G8, G7, G6, G5, G4, G3, G2, G1,
-#     H9, H8, H7, H6, H5, H4, H3, H2, H1,
-#     I9, I8, I7, I6, I5, I4, I3, I2, I1,
-# ] = range(81)
 
 STARTING_SFEN = 'kgsbr/p4/ppppp/5/PPPPP/4P/RBSGK b - 1'
 
@@ -108,15 +92,6 @@ SQUARES_L90 = [
 ]
 
 SQUARES_R45 = [
-    # A9, I8, H7, G6, F5, E4, D3, C2, B1,
-    # B9, A8, I7, H6, G5, F4, E3, D2, C1,
-    # C9, B8, A7, I6, H5, G4, F3, E2, D1,
-    # D9, C8, B7, A6, I5, H4, G3, F2, E1,
-    # E9, D8, C7, B6, A5, I4, H3, G2, F1,
-    # F9, E8, D7, C6, B5, A4, I3, H2, G1,
-    # G9, F8, E7, D6, C5, B4, A3, I2, H1,
-    # H9, G8, F7, E6, D5, C4, B3, A2, I1,
-    # I9, H8, G7, F6, E5, D4, C3, B2, A1,
     A5, E4, D3, C2, B1,
     B5, A4, E3, D2, C1,
     C5, B4, A3, E2, D1,
@@ -125,15 +100,6 @@ SQUARES_R45 = [
 ]
 
 SQUARES_L45 = [
-    # B9, C8, D7, E6, F5, G4, H3, I2, A1,
-    # C9, D8, E7, F6, G5, H4, I3, A2, B1,
-    # D9, E8, F7, G6, H5, I4, A3, B2, C1,
-    # E9, F8, G7, H6, I5, A4, B3, C2, D1,
-    # F9, G8, H7, I6, A5, B4, C3, D2, E1,
-    # G9, H8, I7, A6, B5, C4, D3, E2, F1,
-    # H9, I8, A7, B6, C5, D4, E3, F2, G1,
-    # I9, A8, B7, C6, D5, E4, F3, G2, H1,
-    # A9, B8, C7, D6, E5, F4, G3, H2, I1,
     B5, C4, D3, E2, A1,
     C5, D4, E3, A2, B1,
     D5, E4, A3, B2, C1,
@@ -141,11 +107,40 @@ SQUARES_L45 = [
     A5, B4, C3, D2, E1,
 ]
 
+CSA_SQUARE_NAMES = [
+    '51', '41', '31', '21', '11',
+    '52', '42', '32', '22', '12',
+    '53', '43', '33', '23', '13',
+    '54', '44', '34', '24', '14',
+    '55', '45', '35', '25', '15',
+]
+
+# MOVE_SQUARE_NAMES = [
+#     '5a', '4a', '3a', '2a', '1a',
+#     '5b', '4b', '3b', '2b', '1b',
+#     '5c', '4c', '3c', '2c', '1c',
+#     '5d', '4d', '3d', '2d', '1d',
+#     '5e', '4e', '3e', '2e', '1e',
+# ]
+
 def file_index(square):
     return square % 5
 
 def rank_index(square):
     return square // 5
+
+def move_to_csa(move, board):
+    move_from = move[:2]
+    move_to = move[2:4]
+
+    if move[1] == '*':
+        csa_from = '00'
+    else:
+        csa_from = CSA_SQUARE_NAMES[SQUARE_NAMES.index(move_from)]
+    csa_to = CSA_SQUARE_NAMES[SQUARE_NAMES.index(move_to)]
+
+    return csa_from + csa_to, board.pieces[CSA_SQUARE_NAMES.index(csa_to)]
+
 
 BB_VOID = 0b0000000000000000000000000
 BB_ALL = 0b1111111111111111111111111

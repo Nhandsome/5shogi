@@ -33,12 +33,13 @@ for filepath in find_all_files(args.dir):
             if line == '%TORYO':
                 toryo = True
         if not toryo or move_len <= 10:
-            print(filepath)
+            print('REMOVE')
             os.remove(filepath)
         else:
             kifu_count += 1
             rates.extend([_ for _ in rate.values()])
     except:
-        print(filepath)
+        os.remove(filepath)
+        print('REMOVE')
 
 print('kifu count :', kifu_count)

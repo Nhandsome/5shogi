@@ -28,7 +28,7 @@ class ResNetBlock(nn.Module):
         return self.act(out + x)
 
 class PolicyValueResNetwork(nn.Module):
-    def __init__(self, blocks=1, channels=80, activation=nn.ReLU(), fc1=64):
+    def __init__(self, blocks=2, channels=80, activation=nn.ReLU(), fc1=64):
         super(PolicyValueResNetwork, self).__init__()
         self.l1_1 = nn.Conv2d(in_channels=40, out_channels=channels, kernel_size=3, padding=1, stride=1, bias=False)
         self.l1_2 = nn.Conv2d(in_channels=40, out_channels=channels, kernel_size=1, stride=1, bias=False)

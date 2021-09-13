@@ -1,3 +1,4 @@
+from pickle import FALSE
 import numpy as p
 import torch
 import torch.nn as nn
@@ -10,8 +11,8 @@ from shogi.features import *
 from shogi.network.policy import *
 from shogi.player.base_player import *
 
-device = 'cuda' if torch.cuda.is_available else 'cpu'
-
+# device = 'cuda' if torch.cuda.is_available else 'cpu'
+device='cpu'
 
 def greedy(logits):
   return logits.index(max(logits))
@@ -42,9 +43,8 @@ class PolicyValuePlayer(BasePlayer):
     if self.model is None:
       self.model = PolicyNetwork()
       self.model.to(device)
-    else:
-      checkpoint = torch.load(self.modelfile, map_location=device, strict=False)
-      self.model.load_state_dict(checkpoint['model'])
+    checkpoint = torch.load(self.modelfile, map_location=device)
+    self.model.load_state_dict(checkpoint['model'], strict=False)
     print('readyok')
 
   def go(self):
@@ -77,13 +77,48 @@ class PolicyValuePlayer(BasePlayer):
         
     # 確率が最大の手を選ぶ(グリーディー戦略)
     # selected_index = greedy(legal_logits)
+
     # 確率に応じて手を選ぶ(ソフトマックス戦略)
-    selected_index = boltzmann(np.array(legal_logits, dtype=np.float32), 0.5)
+    selected_index = boltzmann(np.array(legal_logits, dtype=np.float32), 1)
     bestmove = legal_moves[selected_index]
 
     print('bestmove', bestmove.usi())
 
+  def select_move(self):
+    if self.board.is_game_over():
+      print('bestmove resign')
+      return 'q'
+    
+    features = make_input_features_from_board(self.board)
+    x = torch.from_numpy(np.array([features], dtype=np.float32)).to(device)
+
+    with torch.no_grad():
+      y = self.model(x)
+
+      logits = y.data[0].to('cpu')
+      probabilities = F.softmax(y,dim=1).data[0]
+
+    legal_moves = []
+    legal_logits = []
+
+    for move in self.board.legal_moves:
+      label = make_output_label(move, self.board.turn)
+
+      legal_moves.append(move)
+      legal_logits.append(logits[label])
+
+    #   print('info string {:5} : {:.5f}'.format(move.usi(), probabilities[label]))
+        
+    # selected_index = boltzmann(np.array(legal_logits, dtype=np.float32), 1)
+    selected_index = greedy(legal_logits)
+    bestmove = legal_moves[selected_index]
+
+    return bestmove.usi()
+
 if __name__ == '__main__':
     test_player = PolicyValuePlayer()
+    test_player.setoption(['option','modelfile', 'value' ,'/Users/han/python-shogi/checkpoint/5_shogi_210913_2_451_46453'])
     test_player.isready()
     test_player.go()
+    move = test_player.select_move()
+    print(move)
