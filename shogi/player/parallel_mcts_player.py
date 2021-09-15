@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import shogi
+import os
 
 from shogi.common import *
 from shogi.features import *
@@ -12,23 +13,27 @@ from shogi.player.base_player import *
 from shogi.uct.uct_node import *
 
 import math
+from threading import Thread, Lock
 import time
 import copy
 
+if os.getcwd() == '/Users/han/python-shogi':
+    device = 'cpu'
+else:
+    device = 'cuda' if torch.cuda.is_available else 'cpu'
+
 # UCBのボーナス項の定数
-# 今まで選ばれなかったノードに関してのボーナス
 C_PUCT = 1.0
 # 1手当たりのプレイアウト数
-# ランダムにゲームを進み、結果でノードを評価
 CONST_PLAYOUT = 300
 # 投了する勝率の閾値
-RESIGN_THRESHOLD = 0
+RESIGN_THRESHOLD = 0.01
 # 温度パラメータ
-# Normalizationの一種？
 TEMPERATURE = 1.0
-
-device = 'cuda' if torch.cuda.is_available else 'cpu'
-device = 'cpu'
+# Virtual Loss
+VIRTUAL_LOSS = 1
+# 探索スレッド数
+THREAD_NUM = 4
 
 def softmax_temperature_with_normalize(logits, temperature):
     # 温度パラメータを適用
@@ -41,25 +46,22 @@ def softmax_temperature_with_normalize(logits, temperature):
     # 合計が1になるように正規化
     sum_probabilities = sum(probabilities)
     probabilities /= sum_probabilities
-
+    
     return probabilities
 
-# 子ノードがない時、Playout(ランダムにゲームを進む)を行う
 class PlayoutInfo:
     def __init__(self):
         self.halt = 0 # 探索を打ち切る回数
         self.count = 0 # 現在の探索回数
-
-class MctsPlayer(BasePlayer):
+        
+class ParallelMctsPlayer(BasePlayer):
     def __init__(self):
         super().__init__()
         # モデルファイルのパス
-        # 学習済みのモデルを呼び出す
         self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_210913_2_451_46453'
         self.model = None # モデル
 
         # ノードの情報
-        # ノードには、子ノードの情報を含め、Policy/Value Network、MCTSをベースとした勝率情報がある
         self.node_hash = NodeHash()
         self.uct_node = [UctNode() for _ in range(UCT_HASH_SIZE)]
 
@@ -70,11 +72,22 @@ class MctsPlayer(BasePlayer):
         # 温度パラメータ
         self.temperature = TEMPERATURE
 
+        # ロック
+        self.lock_node = [Lock() for _ in range(UCT_HASH_SIZE)]
+        self.lock_expand = Lock() # ノード展開を排他処理するためのLock
+        self.lock_po_info = Lock()
+
+        # キュー
+        self.current_queue_index = 0
+        self.features = [[], []]
+        self.hash_index_queues = [[], []]
+        self.current_features = self.features[self.current_queue_index]
+        self.current_hash_index_queue = self.hash_index_queues[self.current_queue_index]
+
+        # スレッド数
+        self.thread_num = THREAD_NUM
+
     # UCB値が最大の手を求める
-    # child_win / child_move_count：現ノードの評価、勝率
-    # current_node.nnrate：Policy Networkで予測した子ノードの選び確率
-    # u：選ばれて子ノードに対してボーナスを与える
-    # C_PUCT：ボーナスの重みパラメーター
     def select_max_ucb_child(self, board, current_node):
         child_num = current_node.child_num
         child_win = current_node.child_win
@@ -89,16 +102,10 @@ class MctsPlayer(BasePlayer):
 
 
     # ノードの展開
-    # hashに保存されているnodeを探す。無い時は、
-    # 空いているhashを探し
-    # ノードを初期化（子ノード作り、現状況の評価）
     def expand_node(self, board):
-        # 今の状況と同じhashがあるかを確認
-        # 対応するhashが無い時は、UCT_HASH_SIZEを返す
         index = self.node_hash.find_same_hash_index(board.zobrist_hash(), board.turn, board.move_number)
 
         # 合流先が検知できれば, それを返す
-        # 対応するhashを探したら、以前のhash indexを返す
         if not index == UCT_HASH_SIZE:
             return index
     
@@ -114,12 +121,8 @@ class MctsPlayer(BasePlayer):
         current_node.value_win = 0.0
 
         # 候補手の展開
-        # 現状況で展開できるmoveを全て探す（子ノード）
         current_node.child_move = [move for move in board.legal_moves]
-        # 子ノードを数
         child_num = len(current_node.child_move)
-        # 子ノードはまだ初期化されてない
-        # zeroベース
         current_node.child_index = [NOT_EXPANDED for _ in range(child_num)]
         current_node.child_move_count = np.zeros(child_num, dtype=np.int32)
         current_node.child_win = np.zeros(child_num, dtype=np.float32)
@@ -127,14 +130,10 @@ class MctsPlayer(BasePlayer):
         # 子ノードの個数を設定
         current_node.child_num = child_num
 
-        # ノードを評価
-        # 可能な着手がないと価値は0
-        # eval_node：Policy / Value Networkを返す
-        # nnrate：Policy Networkからの子ノードに対する予測確率
-        # value_win：Value Networkからの勝率
-        # evaled：True
+        # 評価の要求をキューに追加
         if child_num > 0:
-            self.eval_node(board, index)
+            self.current_features.append(make_input_features_from_board(board))
+            self.current_hash_index_queue.append(index)
         else:
             current_node.value_win = 0.0
             current_node.evaled = True
@@ -142,7 +141,6 @@ class MctsPlayer(BasePlayer):
         return index
 
     # 探索を打ち切るか確認
-    # 検索できる数より、最も多く選ばれたfirst - secondの差が大きい時、打ち切る。
     def interruption_check(self):
         child_num = self.uct_node[self.current_root].child_num
         child_move_count = self.uct_node[self.current_root].child_move_count
@@ -157,10 +155,24 @@ class MctsPlayer(BasePlayer):
         else:
             return False
 
+    # 並列処理で呼び出す関数
+    def parallel_uct_search(self):
+        # 探索回数が閾値を超える, または探索が打ち切られたらループを抜ける
+        while True:
+            # 探索回数を1回増やす
+            with self.lock_po_info:
+                self.po_info.count += 1
+            # 盤面のコピー
+            board = copy.deepcopy(self.board)
+            # 1回プレイアウトする
+            self.uct_search(board, self.current_root)
+            # 探索を打ち切るか確認
+            with self.lock_po_info:
+                with self.lock_node[self.current_root]:
+                    if self.po_info.count >= self.po_info.halt or self.interruption_check() or not self.node_hash.enough_size:
+                        return
+
     # UCT探索
-    # 子ノードが無い時、1を返す（負けなので相手の勝利）
-    # 子ノードがある時、最もらしい手を打つ
-    # 深く検索しながら、最後負けになる時点から逆順に評価をつける
     def uct_search(self, board, current):
         current_node = self.uct_node[current]
 
@@ -172,77 +184,134 @@ class MctsPlayer(BasePlayer):
         child_move_count = current_node.child_move_count
         child_index = current_node.child_index
 
+        # ニューラルネットワークが計算されるのを待つ
+        while not current_node.evaled:
+            time.sleep(0.000001)
+
+        # 現在のノードをロック
+        self.lock_node[current].acquire()
         # UCB値が最大の手を求める
         next_index = self.select_max_ucb_child(board, current_node)
         # 選んだ手を着手
         board.push(child_move[next_index])
 
+        # Virtual Lossを加算
+        current_node.move_count += VIRTUAL_LOSS
+        child_move_count[next_index] += VIRTUAL_LOSS
+
         # ノードの展開の確認
-        # 次の手が展開されてない場合、今の状況を評価する
         if child_index[next_index] == NOT_EXPANDED:
-            # ノードの展開(ノード展開処理の中でノードを評価する)
-            # 空いているhashを探して、初期化し、ノードの評価を行う
-            index = self.expand_node(board)
+            # ノードの展開中はロック
+            with self.lock_expand:
+                # ノードの展開(ノード展開処理の中でノードをキューに追加する)
+                index = self.expand_node(board)
+
             child_index[next_index] = index
+
+            # 現在見ているノードのロックを解除
+            self.lock_node[current].release()
+
+            # valueが計算されるのを待つ
             child_node = self.uct_node[index]
+            while child_node.evaled == False:
+                time.sleep(0.000001)
 
             # valueを勝敗として返す
             result = 1 - child_node.value_win
-        # 子ノードが展開されている場合、繰り返し
         else:
+            # 現在見ているノードのロックを解除
+            self.lock_node[current].release()
+
             # 手番を入れ替えて1手深く読む
             result = self.uct_search(board, child_index[next_index])
 
         # 探索結果の反映
-        current_node.win += result
-        current_node.move_count += 1
-        current_node.child_win[next_index] += result
-        current_node.child_move_count[next_index] += 1
-
-        # 手を戻す
-        board.pop()
+        with self.lock_node[current]:
+            current_node.win += result
+            current_node.move_count += 1 - VIRTUAL_LOSS
+            current_node.child_win[next_index] += result
+            current_node.child_move_count[next_index] += 1 - VIRTUAL_LOSS
 
         return 1 - result
 
+    # キューをクリア
+    def clear_eval_queue(self):
+        self.current_queue_index = 0
+        for i in range(2):
+            self.features[i].clear()
+            self.hash_index_queues[i].clear()
+        self.current_features = self.features[self.current_queue_index]
+        self.current_hash_index_queue = self.hash_index_queues[self.current_queue_index]
+
     # ノードを評価
-    # 現状況を学習したモデルで評価、情報更新
-    def eval_node(self, board, index):
-        # 現状況でのFeatureを生成
-        eval_features = [make_input_features_from_board(board)]
+    def eval_node(self):
+        enough_batch_size = False
+        while True:
+            if not self.running:
+                break
+
+            self.lock_expand.acquire()
+            if len(self.current_hash_index_queue) == 0:
+                self.lock_expand.release()
+                time.sleep(0.000001)
+                continue
+
+            if self.running and not enough_batch_size and len(self.current_hash_index_queue) < self.thread_num * 0.5:
+                self.lock_expand.release()
+                # キューが溜まるのを1回待つ
+                time.sleep(0.000001)
+                enough_batch_size = True
+                continue
+
+            enough_batch_size = False
+            # 現在のキューを保存
+            eval_features = self.current_features
+            eval_hash_index_queue = self.current_hash_index_queue
+            # カレントキューを入れ替える
+            self.current_queue_index = self.current_queue_index ^ 1
+            self.current_features = self.features[self.current_queue_index]
+            self.current_hash_index_queue = self.hash_index_queues[self.current_queue_index]
+            self.current_features.clear()
+            self.current_hash_index_queue.clear()
+            self.lock_expand.release()
+
+            # 学習モデルを用いた予測
+            x = torch.from_numpy(np.array(eval_features, dtype=np.float32)).to(device)
+            with torch.no_grad():
+                y1, y2 = self.model(x)
         
-        # 学習モデルを用いた予測
-        x = torch.from_numpy(np.array(eval_features, dtype=np.float32)).to(device)
-        with torch.no_grad():
-            y1, y2 = self.model(x)
-    
-            logits = y1.data[0].to('cpu')
-            value = F.softmax(y2,dim=1).data[0].to('cpu')
+                logits_batch = y1.data.to('cpu')
+                values_batch = F.softmax(y2,dim=1).data.to('cpu')
 
-        current_node = self.uct_node[index]
-        child_num = current_node.child_num
-        child_move = current_node.child_move
-        color = self.node_hash[index].color
+            for index, logits, value in zip(eval_hash_index_queue, logits_batch, values_batch):
+                self.lock_node[index].acquire()
 
-        # 合法手でフィルター
-        # っていうことよりは、可能な次の手を表すlabelを生成
-        legal_move_labels = []
-        for i in range(child_num):
-            legal_move_labels.append(make_output_label(child_move[i], color))
+                current_node = self.uct_node[index]
+                child_num = current_node.child_num
+                child_move = current_node.child_move
+                color = self.node_hash[index].color
 
-        # Boltzmann分布
-        # 生成したlabelにモデルのPolicy Networkの予測値を適応
-        probabilities = softmax_temperature_with_normalize(logits[legal_move_labels], self.temperature)
+                # 合法手でフィルター
+                legal_move_labels = []
+                for i in range(child_num):
+                    legal_move_labels.append(make_output_label(child_move[i], color))
+                    
+                # Boltzmann分布
+                probabilities = softmax_temperature_with_normalize(logits[legal_move_labels], self.temperature)
 
-        # ノードの値を更新
-        current_node.nnrate = probabilities
-        current_node.value_win = float(value)
-        current_node.evaled = True
+                # ノードの値を更新
+                current_node.nnrate = probabilities
+                current_node.value_win = float(value)
+                current_node.evaled = True
+
+                self.lock_node[index].release()
 
     def usi(self):
-        print('id name mcts_player')
+        print('id name parallel_mcts_player')
         print('option name modelfile type string default ' + self.modelfile)
         print('option name playout type spin default ' + str(self.playout) + ' min 100 max 10000')
         print('option name temperature type spin default ' + str(int(self.temperature * 100)) + ' min 10 max 1000')
+        print('option name thread type spin default ' + str(self.thread_num) + ' min 1 max 10')
         print('usiok')
 
     def setoption(self, option):
@@ -252,6 +321,8 @@ class MctsPlayer(BasePlayer):
             self.playout = int(option[3])
         elif option[1] == 'temperature':
             self.temperature = int(option[3]) / 100
+        elif option[1] == 'thread':
+            self.thread_num = int(option[3])
 
     def isready(self):
         # モデルをロード
@@ -259,8 +330,7 @@ class MctsPlayer(BasePlayer):
             self.model = PolicyValueResNetwork()
             self.model.to(device)
         checkpoint = torch.load(self.modelfile, map_location=device)
-        self.model.load_state_dict(checkpoint['model'],strict=False)
-        
+        self.model.load_state_dict(checkpoint['model'], strict=False)
         # ハッシュを初期化
         self.node_hash.initialize()
         print('readyok')
@@ -282,6 +352,9 @@ class MctsPlayer(BasePlayer):
         # 探索回数の閾値を設定
         self.po_info.halt = self.playout
 
+        # キューをクリア
+        self.clear_eval_queue()
+
         # ルートノードの展開
         self.current_root = self.expand_node(self.board)
 
@@ -293,22 +366,35 @@ class MctsPlayer(BasePlayer):
             print('bestmove', child_move[0].usi())
             return
 
-        # プレイアウトを繰り返す
-        # 探索回数が閾値を超える, または探索が打ち切られたらループを抜ける
-        while self.po_info.count < self.po_info.halt:
-            # 探索回数を1回増やす
-            self.po_info.count += 1
-            # 1回プレイアウトする
-            self.uct_search(self.board, self.current_root)
-            # 探索を打ち切るか確認
-            if self.interruption_check() or not self.node_hash.enough_size:
-                break
+        # 探索実行中フラグを設定
+        self.running = True
+
+        # ニューラルネットワーク計算スレッド
+        th_nn = Thread(target=self.eval_node)
+        th_nn.start()
+
+        # 探索スレッド
+        threads = []
+        for i in range(self.thread_num):
+            th = Thread(target=self.parallel_uct_search)
+            th.start()
+            threads.append(th)
+
+        # 探索スレッドを待機
+        for th in threads:
+            th.join()
+
+        # 探索実行中フラグを解除
+        self.running = False
+
+        # ニューラルネットワーク計算スレッドを待機
+        th_nn.join()
 
         # 探索にかかった時間を求める
         finish_time = time.time() - begin_time
 
         child_move_count = current_node.child_move_count
-        if self.board.move_number < 10:
+        if self.board.move_number < 3:
             # 訪問回数に応じた確率で手を選択する
             selected_index = np.random.choice(np.arange(child_num), p=child_move_count/sum(child_move_count))
         else:
@@ -328,9 +414,10 @@ class MctsPlayer(BasePlayer):
         best_wp = child_win[selected_index] / child_move_count[selected_index]
 
         # 閾値未満の場合投了
-        if best_wp < RESIGN_THRESHOLD:
-            print('bestmove resign')
-            return
+        if best_wp < RESIGN_THRESHOLD :
+            if self.board.move_number >= 10:
+                print('bestmove resign')
+                return
 
         bestmove = child_move[selected_index]
 
@@ -348,7 +435,7 @@ class MctsPlayer(BasePlayer):
             cp, bestmove.usi()))
 
         print('bestmove', bestmove.usi())
-    
+
     def select_move(self):
         if self.board.is_game_over():
             print('bestmove resign')
@@ -392,7 +479,7 @@ class MctsPlayer(BasePlayer):
         finish_time = time.time() - begin_time
 
         child_move_count = current_node.child_move_count
-        if self.board.move_number < 3:
+        if self.board.move_number < 10:
             # 訪問回数に応じた確率で手を選択する
             selected_index = np.random.choice(np.arange(child_num), p=child_move_count/sum(child_move_count))
         else:
@@ -418,7 +505,7 @@ class MctsPlayer(BasePlayer):
 
         bestmove = child_move[selected_index]
 
-        # 勝率を評価値に変換
+        # # 勝率を評価値に変換
         # if best_wp == 1.0:
         #     cp = 30000
         # else:
@@ -435,6 +522,6 @@ class MctsPlayer(BasePlayer):
 
 if __name__=='__main__':
     # print(os.getenvb())
-    test = MctsPlayer()
+    test = ParallelMctsPlayer()
     test.isready()
     test.go()
