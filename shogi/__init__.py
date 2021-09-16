@@ -241,6 +241,10 @@ BB_SILVER_ATTACKS = [[], []]
 BB_GOLD_ATTACKS = [[], []]
 BB_KING_ATTACKS = []
 
+GAME_RESULTS = [
+	DRAW, BLACK_WIN, WHITE_WIN,
+] = range(3)
+
 for bb_square in BB_SQUARES:
     mask = BB_VOID
     mask |= shift_up_left(bb_square)
@@ -1075,6 +1079,9 @@ class Board(object):
     def peek(self):
         '''Gets the last move from the move stack.'''
         return self.move_stack[-1]
+
+    def opponent(self):
+	    return BLACK if self.turn == WHITE else WHITE
 
     def sfen(self):
         '''

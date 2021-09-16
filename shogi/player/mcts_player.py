@@ -14,6 +14,7 @@ from shogi.uct.uct_node import *
 import math
 import time
 import copy
+import os
 
 # UCBのボーナス項の定数
 # 今まで選ばれなかったノードに関してのボーナス
@@ -27,8 +28,10 @@ RESIGN_THRESHOLD = 0
 # Normalizationの一種？
 TEMPERATURE = 1.0
 
-device = 'cuda' if torch.cuda.is_available else 'cpu'
-device = 'cpu'
+if os.getcwd() == '/Users/han/python-shogi':
+    device = 'cpu'
+else:
+    device = 'cuda' if torch.cuda.is_available else 'cpu'
 
 def softmax_temperature_with_normalize(logits, temperature):
     # 温度パラメータを適用
@@ -55,7 +58,7 @@ class MctsPlayer(BasePlayer):
         super().__init__()
         # モデルファイルのパス
         # 学習済みのモデルを呼び出す
-        self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_210913_2_451_46453'
+        self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_210914_13_73673'
         self.model = None # モデル
 
         # ノードの情報
@@ -308,7 +311,7 @@ class MctsPlayer(BasePlayer):
         finish_time = time.time() - begin_time
 
         child_move_count = current_node.child_move_count
-        if self.board.move_number < 10:
+        if self.board.move_number < 3:
             # 訪問回数に応じた確率で手を選択する
             selected_index = np.random.choice(np.arange(child_num), p=child_move_count/sum(child_move_count))
         else:
@@ -318,11 +321,11 @@ class MctsPlayer(BasePlayer):
         child_win = current_node.child_win
 
         # for debug
-        for i in range(child_num):
-            print('{:3}:{:5} move_count:{:4} nn_rate:{:.5f} win_rate:{:.5f}'.format(
-                i, child_move[i].usi(), child_move_count[i],
-                current_node.nnrate[i],
-                child_win[i] / child_move_count[i] if child_move_count[i] > 0 else 0))
+        # for i in range(child_num):
+        #     print('{:3}:{:5} move_count:{:4} nn_rate:{:.5f} win_rate:{:.5f}'.format(
+        #         i, child_move[i].usi(), child_move_count[i],
+        #         current_node.nnrate[i],
+        #         child_win[i] / child_move_count[i] if child_move_count[i] > 0 else 0))
 
         # 選択した着手の勝率の算出
         best_wp = child_win[selected_index] / child_move_count[selected_index]
@@ -349,10 +352,13 @@ class MctsPlayer(BasePlayer):
 
         print('bestmove', bestmove.usi())
     
+
+
+
     def select_move(self):
         if self.board.is_game_over():
             print('bestmove resign')
-            return 'q'
+            return 'resign'
 
         # 探索情報をクリア
         self.po_info.count = 0
@@ -401,28 +407,28 @@ class MctsPlayer(BasePlayer):
 
         child_win = current_node.child_win
 
-        # for debug
-        # for i in range(child_num):
-        #     print('{:3}:{:5} move_count:{:4} nn_rate:{:.5f} win_rate:{:.5f}'.format(
-        #         i, child_move[i].usi(), child_move_count[i],
-        #         current_node.nnrate[i],
-        #         child_win[i] / child_move_count[i] if child_move_count[i] > 0 else 0))
+        #for debug
+        for i in range(child_num):
+            print('{:3}:{:5} move_count:{:4} nn_rate:{:.5f} win_rate:{:.5f}'.format(
+                i, child_move[i].usi(), child_move_count[i],
+                current_node.nnrate[i],
+                child_win[i] / child_move_count[i] if child_move_count[i] > 0 else 0))
 
         # 選択した着手の勝率の算出
         best_wp = child_win[selected_index] / child_move_count[selected_index]
 
-        # 閾値未満の場合投了
-        # if best_wp < RESIGN_THRESHOLD:
-        #     print('bestmove resign')
-        #     return
+        #閾値未満の場合投了
+        if best_wp < RESIGN_THRESHOLD:
+            print('bestmove resign')
+            return
 
         bestmove = child_move[selected_index]
 
         # 勝率を評価値に変換
-        # if best_wp == 1.0:
-        #     cp = 30000
-        # else:
-        #     cp = int(-math.log(1.0 / best_wp - 1.0) * 600)
+        if best_wp == 1.0:
+            cp = 30000
+        else:
+            cp = int(-math.log(1.0 / best_wp - 1.0) * 600)
 
         # print('info nps {} time {} nodes {} hashfull {} score cp {} pv {}'.format(
         #     int(current_node.move_count / finish_time),
@@ -433,8 +439,8 @@ class MctsPlayer(BasePlayer):
 
         return (bestmove.usi())
 
-if __name__=='__main__':
+# if __name__=='__main__':
     # print(os.getenvb())
-    test = MctsPlayer()
-    test.isready()
-    test.go()
+    # test = MctsPlayer()
+    # test.isready()
+    # test.go()

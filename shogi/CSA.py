@@ -600,9 +600,8 @@ class CsaWriter:
                 self.f.write("'")
                 self.f.write(comment)
                 self.f.write('\n')
-
-        csa_pos = 'P1-HI-KA-GI-KI-OU\nP2 *  *  *  * -FU\nP3 *  *  *  *  * \nP4+FU *  *  *  * \nP5+OU+KI+GI+KA+HI\n+\n'
-        self.f.write(csa_pos)
+        # csa_pos = 'P1-HI-KA-GI-KI-OU\nP2 *  *  *  * -FU\nP3 *  *  *  *  * \nP4+FU *  *  *  * \nP5+OU+KI+GI+KA+HI\n+\n'
+        self.f.write('PI\n+\n')
         self.turn = 0
 
     def move(self, move_csa, piece_csa, time=None, comment=None, sep='\n'):
