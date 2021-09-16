@@ -135,11 +135,13 @@ def move_to_csa(move, board):
 
     if move[1] == '*':
         csa_from = '00'
+        csa_piece = PIECE_SYMBOLS.index(move[0].lower())
     else:
         csa_from = CSA_SQUARE_NAMES[SQUARE_NAMES.index(move_from)]
+        csa_piece = board.pieces[CSA_SQUARE_NAMES.index(csa_from)]
     csa_to = CSA_SQUARE_NAMES[SQUARE_NAMES.index(move_to)]
 
-    return csa_from + csa_to, board.pieces[CSA_SQUARE_NAMES.index(csa_to)]
+    return csa_from + csa_to, csa_piece
 
 
 BB_VOID = 0b0000000000000000000000000
@@ -862,9 +864,9 @@ class Board(object):
             if move.promotion:
                 if piece == GOLD or piece == KING or piece >= PROM_PAWN:
                     return False
-                if self.turn == BLACK and rank_index(move.to_square) > 2 and rank_index(move.from_square) > 2:
+                if self.turn == BLACK and rank_index(move.to_square) > 0 and rank_index(move.from_square) > 0:
                     return False
-                elif self.turn == WHITE and rank_index(move.to_square) < 6 and rank_index(move.from_square) < 6:
+                elif self.turn == WHITE and rank_index(move.to_square) < 4 and rank_index(move.from_square) < 4:
                     return False
 
             # Can move without promotion

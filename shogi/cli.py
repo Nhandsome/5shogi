@@ -460,7 +460,7 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
                 if board.is_legal(move):
                     if csa:
                         move_csa, piece_csa = move_to_csa(move.usi(), board)
-                        piece_csa = PIECE_SYMBOLS[piece_csa]
+                        piece_csa = CSA.PIECE_SYMBOLS[piece_csa]
                         csa_exporter.move(move_csa, piece_csa, time=int(elapsed_time))#, comment=usi_info_to_csa_comment(board, listener.info))
                     board.push(move)
                     moves.append(move)

@@ -58,7 +58,7 @@ class ParallelMCTSPlayer(BasePlayer):
     def __init__(self):
         super().__init__()
         # モデルファイルのパス
-        self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_210913_2_451_46453'
+        self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_auto1_22_77902'
         self.model = None # モデル
 
         # ノードの情報
@@ -365,6 +365,16 @@ class ParallelMCTSPlayer(BasePlayer):
             print('bestmove', child_move[0].usi())
             return
 
+        # HAN to make 
+        temp_board = copy.deepcopy(self.board)
+        temp_moves = child_move
+        for t_move in temp_moves:
+            temp_board.push(t_move)
+            if temp_board.is_game_over():
+                print('bestmove', t_move.usi())
+                return
+            temp_board.pop()
+
         # 探索実行中フラグを設定
         self.running = True
 
@@ -393,7 +403,7 @@ class ParallelMCTSPlayer(BasePlayer):
         finish_time = time.time() - begin_time
 
         child_move_count = current_node.child_move_count
-        if self.board.move_number < 10:
+        if self.board.move_number < 6:
             # 訪問回数に応じた確率で手を選択する
             selected_index = np.random.choice(np.arange(child_num), p=child_move_count/sum(child_move_count))
         else:
