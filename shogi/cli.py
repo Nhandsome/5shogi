@@ -634,8 +634,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--engine1')
-    parser.add_argument('--engine2')
+    parser.add_argument('engine1')
+    parser.add_argument('engine2')
     parser.add_argument('engine3', nargs='?')
     parser.add_argument('--options1', type=str, default='')
     parser.add_argument('--options2', type=str, default='')
@@ -649,7 +649,7 @@ if __name__ == '__main__':
     parser.add_argument('--byoyomi', type=int, nargs='+')
     parser.add_argument('--time', type=int, nargs='+')
     parser.add_argument('--inc', type=int, nargs='+')
-    parser.add_argument('--draw', type=int, default=128)
+    parser.add_argument('--draw', type=int, default=70)
     parser.add_argument('--opening', type=str)
     parser.add_argument('--opening-moves', type=int, default=24)
     parser.add_argument('--opening-seed', type=int)
@@ -661,45 +661,12 @@ if __name__ == '__main__':
     # parser.add_argument('--no-pgn-moves', action='store_true')
     parser.add_argument('--display', action='store_true')
     parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--round', type=int, default=1)
     args = parser.parse_args()
 
     import random
 
-    for round_auto in range(10000):
-        player1 = '/Users/han/python-shogi/parallel_mcts_player.sh'
-        player2 = '/Users/han/python-shogi/parallel_mcts_player.sh'
-
-        
-
-        temp_rand1 = random.randint(10,1000)
-        play_rand1 = random.randint(50,200)
-        temp_rand2 = random.randint(10,1000)
-        play_rand2 = random.randint(50,200)
-
-        options1 = f'modelfile:/Users/han/python-shogi/checkpoint/5_shogi_auto1_82_290362,temperature:{temp_rand1},playout:{play_rand1}'
-
-        options2 = f'modelfile:/Users/han/python-shogi/checkpoint/5_shogi_auto1_17_60197,temperature:{temp_rand2},playout:{play_rand2}'
-
-
-        args.engine1 = player1
-        args.engine2 = player2
-
-        args.options1 = options1
-        args.options2 = options2
-
-        args.csa = './data/csa_auto'
-        args.multi_csa = False
-
-        args.mate_win = True
-
-        args.display = True
-        args.debug = True
-        
-        args.name1 = 'player1_random'
-        args.name2 = 'player2_random'
-
-        args.games = 1
-
+    for r in range(args.round):
 
         if args.csa is not None and not args.multi_csa:
             os.makedirs(args.csa, exist_ok=True)
