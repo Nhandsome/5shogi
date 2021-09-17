@@ -58,7 +58,7 @@ class ParallelMCTSPlayer(BasePlayer):
     def __init__(self):
         super().__init__()
         # モデルファイルのパス
-        self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_auto1_22_77902'
+        self.modelfile = r'/Users/han/python-shogi/checkpoint/best/bast_pv_2'
         self.model = None # モデル
 
         # ノードの情報
@@ -365,13 +365,14 @@ class ParallelMCTSPlayer(BasePlayer):
             print('bestmove', child_move[0].usi())
             return
 
-        # HAN to make 
+        # HAN 
         temp_board = copy.deepcopy(self.board)
         temp_moves = child_move
         for t_move in temp_moves:
             temp_board.push(t_move)
             if temp_board.is_game_over():
                 print('bestmove', t_move.usi())
+                temp_board.pop()
                 return
             temp_board.pop()
 

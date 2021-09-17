@@ -24,6 +24,7 @@ import copy
 import time
 
 class Engine:
+    device='cpu'
     def __init__(self, cmd, connect=True, debug=False):
         self.cmd = cmd
         self.debug = debug
@@ -146,13 +147,13 @@ class Engine:
             listener(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
-        # check=0
+
         while True:
             ## TODO HAN
             self.proc.stdout.flush()
             line = self.proc.stdout.readline()
             if line == b'':
-                print('check')
+                raise EOFError()
             line = line.strip().decode('ascii')
             if listener:
                 listener(line)
@@ -490,9 +491,6 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             if board.is_game_over():
                 is_game_over = True
                 break
-        ## TODO HAN
-        if bestmove == 'check':
-            break
 
         # エンジン終了
         if not keep_process:
@@ -513,15 +511,15 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             print('まで{}手で入玉宣言'.format(board.move_number - 1))
             csa_endgame = '%KACHI'
         elif is_illegal:
-            win = board.opponent
+            win = board.opponent()
             print('まで{}手で{}の反則負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
             csa_endgame = '%ILLEGAL_MOVE'
         elif is_timeup:
-            win = board.opponent
+            win = board.opponent()
             print('まで{}手で{}の切れ負け'.format(board.move_number - 1, '先手' if win == WHITE else '後手'))
             csa_endgame = '%TIME_UP'
         else:
-            win = board.opponent
+            win = board.opponent()
             print('まで{}手で{}の勝ち'.format(board.move_number - 1, '先手' if win == BLACK else '後手'))
             csa_endgame = '%TORYO'
 
@@ -634,8 +632,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('engine1')
-    parser.add_argument('engine2')
+    parser.add_argument('--engine1')
+    parser.add_argument('--engine2')
     parser.add_argument('engine3', nargs='?')
     parser.add_argument('--options1', type=str, default='')
     parser.add_argument('--options2', type=str, default='')
@@ -665,6 +663,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     import random
+    main('/Users/han/python-shogi/parallel_mcts_player_1.sh','/Users/han/python-shogi/parallel_mcts_player_2.sh', debug=True)
 
     for r in range(args.round):
 
