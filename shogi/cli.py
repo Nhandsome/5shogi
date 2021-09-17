@@ -632,8 +632,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--engine1')
-    parser.add_argument('--engine2')
+    parser.add_argument('engine1')
+    parser.add_argument('engine2')
     parser.add_argument('engine3', nargs='?')
     parser.add_argument('--options1', type=str, default='')
     parser.add_argument('--options2', type=str, default='')
@@ -661,9 +661,6 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--round', type=int, default=1)
     args = parser.parse_args()
-
-    import random
-    main('/Users/han/python-shogi/parallel_mcts_player_1.sh','/Users/han/python-shogi/parallel_mcts_player_2.sh', debug=True)
 
     for r in range(args.round):
 

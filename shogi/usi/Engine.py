@@ -150,9 +150,3 @@ class Engine:
         self.proc.stdin.flush()
         self.proc.wait()
         self.proc = None
-
-if __name__=='__main__':
-    test = Engine('/Users/han/python-shogi/mcts_player.sh', connect=False)
-    # test.isready()
-    # test.usi()
-    # test.go()
