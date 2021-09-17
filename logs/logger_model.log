@@ -5914,3 +5914,7 @@
 2021-09-18 01:33:39,548 INFO LOADING MODEL : /Users/han/python-shogi/checkpoint/best/best_pv_1
 2021-09-18 01:38:25,111 INFO LOADING MODEL : /Users/han/python-shogi/checkpoint/base/base_pv
 2021-09-18 01:38:25,155 INFO LOADING MODEL : /Users/han/python-shogi/checkpoint/best/best_pv_1
+2021-09-18 01:39:33,136 INFO RETRAIN MODEL : current_player
+2021-09-18 01:39:47,645 INFO epoch = 2, iteration = 0, loss_policy = 1.789650692288571, loss_value = 1.789650692288571, loss = 1.789650692288571
+2021-09-18 01:39:47,645 INFO END RETRAIN
+2021-09-18 01:39:47,646 INFO save checkpoint
