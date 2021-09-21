@@ -3,7 +3,7 @@
 ##############################
 ROUNDS = 2
 MCTS_SIMS = 50
-MEMORY_SIZE = 5
+MEMORY_SIZE = 1
 DRAW = 50
 CPUCT = 1
 TEMPERATURE = 100
@@ -11,7 +11,7 @@ TEMPERATURE = 100
 ##############################
 ########## TRAIN ##########
 ##############################
-BATCH_SIZE = 10
+BATCH_SIZE = 256
 EPOCHES = 1
 LEARNING_RATE = 0.1
 
@@ -21,5 +21,5 @@ CHANNELS = 80
 ##############################
 ########## EVALUATION ##########
 ##############################
-EVAL_ROUNDS = 10
+EVAL_ROUNDS = 3
 EVAL_THRESHOLD = 3

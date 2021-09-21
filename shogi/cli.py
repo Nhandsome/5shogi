@@ -24,7 +24,6 @@ import copy
 import time
 
 class Engine:
-    device='cpu'
     def __init__(self, cmd, connect=True, debug=False):
         self.cmd = cmd
         self.debug = debug
@@ -406,9 +405,6 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
             # go
             bestmove, _ = engine.go(byoyomi=byoyomi, btime=remain_time[BLACK], wtime=remain_time[WHITE], binc=binc, winc=winc, listener=listener)
 
-            if bestmove == 'check':
-                break
-
             elapsed_time = perf_counter() - start_time
 
             if remain_time[board.turn] is not None:
@@ -632,8 +628,8 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('engine1')
-    parser.add_argument('engine2')
+    parser.add_argument('--engine1')
+    parser.add_argument('--engine2')
     parser.add_argument('engine3', nargs='?')
     parser.add_argument('--options1', type=str, default='')
     parser.add_argument('--options2', type=str, default='')
@@ -662,106 +658,119 @@ if __name__ == '__main__':
     parser.add_argument('--round', type=int, default=1)
     args = parser.parse_args()
 
-    for r in range(args.round):
+    import random
+    
+        
+    temp_1 = str(random.sample(range(10, 1000, 10),k=1)[0])
+    play_1 = str(random.sample(range(50, 100, 10),k=1)[0])
+    
+    engine1 = '/Users/han/python-shogi/parallel_mcts_player_1.sh'
+    options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_5','temperature':temp_1,'playout':play_1}
+    engine2 = '/Users/han/python-shogi/parallel_mcts_player_2.sh'
+    options_b2 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_5','temperature':temp_1,'playout':play_1}
 
-        if args.csa is not None and not args.multi_csa:
-            os.makedirs(args.csa, exist_ok=True)
+    main(engine1, engine2, options_b1, options_b2,games=1,is_display=True)
 
-        options_list = [{}, {}, {}]
-        for i, kvs in enumerate([options.split(',') for options in (args.options1, args.options2, args.options3)]):
-            if len(kvs) == 1 and kvs[0] == '':
-                continue
-            for kv_str in kvs:
-                kv = kv_str.split(':', 1)
-                if len(kv) != 2:
-                    raise ValueError('options{}'.format(i + 1))
-                options_list[i][kv[0]] = kv[1]
+    # for r in range(args.round):
 
-        if args.engine3 is None:
-            # 1 on 1 matches
-            main(args.engine1, args.engine2,
-                options_list[0], options_list[1],
-                [args.name1, args.name2],
-                args.games, args.resign, args.mate_win,
-                args.byoyomi, args.time, args.inc,
-                args.draw, args.opening, args.opening_moves, args.opening_seed, args.opening_index,
-                args.keep_process,
-                args.csa, args.multi_csa,
-                # args.pgn, args.no_pgn_moves,
-                args.display, args.debug)
-        else:
-            # league matches
-            engines = (args.engine1, args.engine2, args.engine3)
-            names = (args.name1, args.name2, args.name3)
-            if args.byoyomi:
-                if len(args.byoyomi) == 3:
-                    byoyomis = (args.byoyomi[0], args.byoyomi[1], args.byoyomi[2])
-                else:
-                    byoyomis = (args.byoyomi[0], args.byoyomi[0], args.byoyomi[0])
-            else:
-                byoyomis = (None, None, None)
-            if args.time:
-                if len(args.time) == 3:
-                    times = (args.time[0], args.time[1], args.time[2])
-                else:
-                    times = (args.time[0], args.time[0], args.time[0])
-            else:
-                times = (None, None, None)
-            if args.inc:
-                if len(args.inc) == 3:
-                    incs = (args.inc[0], args.inc[1], args.inc[2])
-                else:
-                    incs = (args.inc[0], args.inc[0], args.inc[0])
-            else:
-                incs = (None, None, None)
-            combinations = ((0, 1), (0, 2), (1, 2))
-            results = [
-                { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 },
-                { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 },
-                { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 }]
+    #     if args.csa is not None and not args.multi_csa:
+    #         os.makedirs(args.csa, exist_ok=True)
 
-            # 初期局面
-            if args.opening:
-                # インデックス指定
-                if args.opening_index is not None:
-                    opening_index_list = [args.opening_index]
-                else:
-                    with open(args.opening) as f:
-                        opening_index_list = list(range(len(f.readlines())))
-                    # シャッフル
-                    if args.opening_seed is not None:
-                        random.seed(args.opening_seed)
-                    random.shuffle(opening_index_list)
+    #     options_list = [{}, {}, {}]
+    #     for i, kvs in enumerate([options.split(',') for options in (args.options1, args.options2, args.options3)]):
+    #         if len(kvs) == 1 and kvs[0] == '':
+    #             continue
+    #         for kv_str in kvs:
+    #             kv = kv_str.split(':', 1)
+    #             if len(kv) != 2:
+    #                 raise ValueError('options{}'.format(i + 1))
+    #             options_list[i][kv[0]] = kv[1]
 
-            for n in range(0, args.games, 2):
-                if args.opening:
-                    opening_index = opening_index_list[n // 2 % len(opening_index_list)]
-                else:
-                    opening_index = None
-                for i, (a, b) in enumerate(combinations):
-                    # 先後入れ替えて1回ずつ対局
-                    result = main(engines[a], engines[b],
-                        options_list[a], options_list[b],
-                        [names[a], names[b]],
-                        2, args.resign, args.mate_win,
-                        (byoyomis[a], byoyomis[b]), (times[a], times[b]), (incs[a], incs[b]),
-                        args.draw, args.opening, args.opening_moves, None, opening_index,
-                        args.keep_process,
-                        args.csa, args.multi_csa,
-                        # args.pgn, args.no_pgn_moves,
-                        args.display, args.debug,
-                        print_summary=False)
-                    results[i]['engine1_name'] = result['engine1_name']
-                    results[i]['engine2_name'] = result['engine2_name']
-                    results[i]['engine1_won'] += result['engine1_won']
-                    results[i]['engine2_won'] += result['engine2_won']
-                    results[i]['draw'] += result['draw']
-                    results[i]['total'] += result['total']
+    #     if args.engine3 is None:
+    #         # 1 on 1 matches
+    #         main(args.engine1, args.engine2,
+    #             options_list[0], options_list[1],
+    #             [args.name1, args.name2],
+    #             args.games, args.resign, args.mate_win,
+    #             args.byoyomi, args.time, args.inc,
+    #             args.draw, args.opening, args.opening_moves, args.opening_seed, args.opening_index,
+    #             args.keep_process,
+    #             args.csa, args.multi_csa,
+    #             # args.pgn, args.no_pgn_moves,
+    #             args.display, args.debug)
+    #     else:
+    #         # league matches
+    #         engines = (args.engine1, args.engine2, args.engine3)
+    #         names = (args.name1, args.name2, args.name3)
+    #         if args.byoyomi:
+    #             if len(args.byoyomi) == 3:
+    #                 byoyomis = (args.byoyomi[0], args.byoyomi[1], args.byoyomi[2])
+    #             else:
+    #                 byoyomis = (args.byoyomi[0], args.byoyomi[0], args.byoyomi[0])
+    #         else:
+    #             byoyomis = (None, None, None)
+    #         if args.time:
+    #             if len(args.time) == 3:
+    #                 times = (args.time[0], args.time[1], args.time[2])
+    #             else:
+    #                 times = (args.time[0], args.time[0], args.time[0])
+    #         else:
+    #             times = (None, None, None)
+    #         if args.inc:
+    #             if len(args.inc) == 3:
+    #                 incs = (args.inc[0], args.inc[1], args.inc[2])
+    #             else:
+    #                 incs = (args.inc[0], args.inc[0], args.inc[0])
+    #         else:
+    #             incs = (None, None, None)
+    #         combinations = ((0, 1), (0, 2), (1, 2))
+    #         results = [
+    #             { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 },
+    #             { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 },
+    #             { 'engine1_won': 0, 'engine2_won': 0, 'draw': 0, 'total': 0 }]
 
-                # 勝敗状況表示
-                print('{} of {} games finished.'.format(n + 2, args.games))
-                for i, (a, b) in enumerate(combinations):
-                    print('{} vs {}: {}-{}-{} ({:.1f}%)'.format(
-                        results[i]['engine1_name'], results[i]['engine2_name'],
-                        results[i]['engine1_won'], results[i]['engine2_won'], results[i]['draw'],
-                        (results[i]['engine1_won'] + results[i]['draw'] / 2) / results[i]['total'] * 100))
+    #         # 初期局面
+    #         if args.opening:
+    #             # インデックス指定
+    #             if args.opening_index is not None:
+    #                 opening_index_list = [args.opening_index]
+    #             else:
+    #                 with open(args.opening) as f:
+    #                     opening_index_list = list(range(len(f.readlines())))
+    #                 # シャッフル
+    #                 if args.opening_seed is not None:
+    #                     random.seed(args.opening_seed)
+    #                 random.shuffle(opening_index_list)
+
+    #         for n in range(0, args.games, 2):
+    #             if args.opening:
+    #                 opening_index = opening_index_list[n // 2 % len(opening_index_list)]
+    #             else:
+    #                 opening_index = None
+    #             for i, (a, b) in enumerate(combinations):
+    #                 # 先後入れ替えて1回ずつ対局
+    #                 result = main(engines[a], engines[b],
+    #                     options_list[a], options_list[b],
+    #                     [names[a], names[b]],
+    #                     2, args.resign, args.mate_win,
+    #                     (byoyomis[a], byoyomis[b]), (times[a], times[b]), (incs[a], incs[b]),
+    #                     args.draw, args.opening, args.opening_moves, None, opening_index,
+    #                     args.keep_process,
+    #                     args.csa, args.multi_csa,
+    #                     # args.pgn, args.no_pgn_moves,
+    #                     args.display, args.debug,
+    #                     print_summary=False)
+    #                 results[i]['engine1_name'] = result['engine1_name']
+    #                 results[i]['engine2_name'] = result['engine2_name']
+    #                 results[i]['engine1_won'] += result['engine1_won']
+    #                 results[i]['engine2_won'] += result['engine2_won']
+    #                 results[i]['draw'] += result['draw']
+    #                 results[i]['total'] += result['total']
+
+    #             # 勝敗状況表示
+    #             print('{} of {} games finished.'.format(n + 2, args.games))
+    #             for i, (a, b) in enumerate(combinations):
+    #                 print('{} vs {}: {}-{}-{} ({:.1f}%)'.format(
+    #                     results[i]['engine1_name'], results[i]['engine2_name'],
+    #                     results[i]['engine1_won'], results[i]['engine2_won'], results[i]['draw'],
+    #                     (results[i]['engine1_won'] + results[i]['draw'] / 2) / results[i]['total'] * 100))

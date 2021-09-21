@@ -1,7 +1,8 @@
 from Memory import *
 from Train import *
 from importlib import reload
-from shogi import cli
+from shogi import cli_train
+from shogi.player.mcts_player import MctsPlayer
 
 import config
 
@@ -9,6 +10,7 @@ import loggers as lg
 import pickle
 import os
 import random
+import shutil
 
 path = os.getcwd()
 
@@ -25,23 +27,23 @@ print('=============================================')
 ####################### config.pyも参考に
 
 ## 並列化 Monte Carlo Tree Searchを行う PLAYER
-player_1 = f'{path}/parallel_mcts_player_1.sh'
-player_2 = f'{path}/parallel_mcts_player_2.sh'
+player_1 = MctsPlayer()
+player_2 = MctsPlayer()
 
 ## Pre-trained BASE POLICY VALUE MODEL
 ## MODEL / OPTIMIZER 初期化に使う
-current_pv = f'{path}/checkpoint/base/base_pv'
+current_pv = f'{path}/checkpoint/best/best_pv_1'
 
 ## PICKLE INIT DATASET
 ## Noneの場合は、0から対局データセットを作る
 ## config.MEMORY_SIZEまで）
-# init_csa = f'{path}/data/pickle/csa.pickle'
-init_csa = None
+init_csa = f'{path}/data/pickle/csa.pickle'
+# init_csa = None
 
 ## {path}/checkpoint/best/best_pv_{init_best_version}
 ## の形でPre-trained ModelをSaveすること
 ## Noneの場合は、currnet_pvと同じ
-init_best_version = 1
+init_best_version = 2
 # init_best_version = 0
 
 ## SELF MATCHデータをSAVEするFolder
@@ -63,7 +65,7 @@ else:
     memory = Memory()
 
 lg.logger_main.info(f'MEMORY LENGTH : {memory.len_memory}')
-print(f'MEMORY LENGTH : {memory.len_memory}')   
+print(f'MEMORY LENGTH : {memory.len_memory}')
 
 ####################### INIT MODELS
 
@@ -94,7 +96,6 @@ best_version = init_best_version
 
 while True:
     itr += 1
-    reload(lg)
 
     print(f'ITERATION NUMBER {str(itr)}')
 
@@ -108,7 +109,7 @@ while True:
 
     print('SELF MATCH...')
     options_b = {'modelfile':best_m.model_path,'temperature':config.TEMPERATURE,'playout':config.MCTS_SIMS}
-    cli.main(best_m.mcts_player, best_m.mcts_player, options1=options_b, options2=options_b, names=[best_m.name, best_m.name], csa=current_csa, games=config.ROUNDS, draw=config.DRAW)
+    cli_train.main(best_m.mcts_player, best_m.mcts_player, options1=options_b, options2=options_b, names=[best_m.name, best_m.name], csa=current_csa, games=config.ROUNDS, draw=config.DRAW)
     print('')
 
     lg.logger_main.info(f'END MATCHES (BEST_{best_version} VS BEST_{best_version})')
@@ -120,6 +121,12 @@ while True:
 
     memory.position += temp_memory.position
     memory.len_memory += temp_memory.len_memory
+    
+    with open(f'{path}/data/pickle/csa_new.pickle', 'wb') as f:
+        pickle.dump(memory.position, f, pickle.HIGHEST_PROTOCOL)
+
+    shutil.rmtree(f'{path}/data/csa_current/')
+    os.makedirs(f'{path}/data/csa_current/')
 
     lg.logger_main.info(f'MEMORIES : {memory.len_memory} / {config.MEMORY_SIZE}')
     print(f'MEMORIES : {memory.len_memory} / {config.MEMORY_SIZE}')
@@ -154,7 +161,7 @@ while True:
         options_c = {'modelfile':current_m.model_path,'temperature':config.TEMPERATURE,'playout':config.MCTS_SIMS}
         options_b = {'modelfile':best_m.model_path,'temperature':config.TEMPERATURE,'playout':config.MCTS_SIMS}
         
-        match_result = cli.main(current_m.mcts_player, best_m.mcts_player, options1=options_c, options2=options_b, names=[current_m.name, best_m.name], csa=current_csa, games=config.EVAL_ROUNDS, draw=config.DRAW)
+        match_result = cli_train.main(current_m.mcts_player, best_m.mcts_player, options1=options_c, options2=options_b, names=[current_m.name, best_m.name], csa=current_csa, games=config.EVAL_ROUNDS, draw=config.DRAW)
         
         c_name, b_name, c_won, b_won, total = match_result['engine1_name'], match_result['engine2_name'], match_result['engine1_won'], match_result['engine2_won'], match_result['total']
 

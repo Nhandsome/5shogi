@@ -7,6 +7,7 @@ from shogi.common import *
 from shogi.features import *
 from shogi.read_kifu import *
 from shogi.network.policyvalue_res import PolicyValueResNetwork
+from torch.utils.tensorboard import SummaryWriter
 import config
 
 import os
@@ -88,7 +89,7 @@ class Model():
             self.optimizer.load_state_dict(checkpoint['optimizer'])
 
     def retrain(self, train_memory, batch_size=config.BATCH_SIZE, epoch=config.EPOCHES, eval_interval=10):
-        # writer = SummaryWriter()
+        writer = SummaryWriter()
 
         lg.logger_model.info(f'RETRAIN MODEL : {self.name}')
         print(f'RETRAIN MODEL : {self.name}')
@@ -133,9 +134,18 @@ class Model():
                 sum_loss1_eval += loss1.item()
                 sum_loss2_eval += loss2.item()
                 sum_loss_eval += loss.item()
-
+            
             lg.logger_model.info('epoch = {}, iteration = {}, loss_policy = {}, loss_value = {}, loss = {}'.format(
+                                e, itr, sum_loss1_eval/itr_eval, sum_loss1_eval/itr_eval, sum_loss1_eval/itr_eval))
+            print('epoch = {}, iteration = {}, loss_policy = {}, loss_value = {}, loss = {}'.format(
+                                e, itr, sum_loss1_eval/itr_eval, sum_loss1_eval/itr_eval, sum_loss1_eval/itr_eval))
+            print('epoch = {}, iteration = {}, loss_policy = {}, loss_value = {}, loss = {}'.format(
                                 epoch, itr, sum_loss1_eval/itr_eval, sum_loss1_eval/itr_eval, sum_loss1_eval/itr_eval))
+            writer.add_scalar('Train_Loss_Policy/Iteration', sum_loss1_eval/itr_eval, e)
+            writer.add_scalar('Train_Loss_Value/Iteration', sum_loss2_eval/itr_eval, e)
+            writer.add_scalar('Train_Loss/Iteration', sum_loss_eval/itr_eval, e)
+
+            writer.close()
 
                 # sum_loss1 += loss1.item()
                 # sum_loss2 += loss2.item()
@@ -189,7 +199,7 @@ class Model():
         save_checkpoint(self.model_path, self.model, self.optimizer)
 
         # writer.close()
-
+        
     def get_pred(self, test_memory, batch_size=config.BATCH_SIZE,):
         itr_test = 0
         sum_test_accuracy1 = 0

@@ -2,8 +2,7 @@ import numpy as p
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-import shogi
+import multiprocessing
 
 from shogi.common import *
 from shogi.features import *
@@ -13,8 +12,12 @@ from shogi.uct.uct_node import *
 
 import math
 import time
-import copy
 import os
+
+if os.getcwd() == '/Users/han/python-shogi':
+    device = 'cpu'
+else:
+    device = 'cuda' if torch.cuda.is_available else 'cpu'
 
 # UCBのボーナス項の定数
 # 今まで選ばれなかったノードに関してのボーナス
@@ -27,11 +30,6 @@ RESIGN_THRESHOLD = 0
 # 温度パラメータ
 # Normalizationの一種？
 TEMPERATURE = 1.0
-
-if os.getcwd() == '/Users/han/python-shogi':
-    device = 'cpu'
-else:
-    device = 'cuda' if torch.cuda.is_available else 'cpu'
 
 def softmax_temperature_with_normalize(logits, temperature):
     # 温度パラメータを適用
@@ -58,7 +56,8 @@ class MctsPlayer(BasePlayer):
         super().__init__()
         # モデルファイルのパス
         # 学習済みのモデルを呼び出す
-        self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_210914_13_73673'
+        self.name = 'mctsplayer'
+        self.modelfile = r'/Users/han/python-shogi/checkpoint/best/bast_pv_2'
         self.model = None # モデル
 
         # ノードの情報
@@ -137,7 +136,7 @@ class MctsPlayer(BasePlayer):
         # value_win：Value Networkからの勝率
         # evaled：True
         if child_num > 0:
-            self.eval_node(board, index)
+            multiprocessing.Process(self.eval_node(board, index))
         else:
             current_node.value_win = 0.0
             current_node.evaled = True
@@ -256,6 +255,14 @@ class MctsPlayer(BasePlayer):
         elif option[1] == 'temperature':
             self.temperature = int(option[3]) / 100
 
+    def position(self, moves=None, sfen="startpos"):
+
+        self.board.reset()
+        for move in moves:
+            self.board.push_usi(move)
+        print(self.board.sfen())
+
+
     def isready(self):
         # モデルをロード
         if self.model is None:
@@ -268,10 +275,16 @@ class MctsPlayer(BasePlayer):
         self.node_hash.initialize()
         print('readyok')
 
-    def go(self):
+    def usinewgame(self):
+        pass
+
+    def quit(self):
+        pass
+
+    def go(self, ponder=False, btime=None, wtime=None, byoyomi=None, binc=None, winc=None, nodes=None, listener=None):
         if self.board.is_game_over():
             print('bestmove resign')
-            return
+            return 'resign' ,''
 
         # 探索情報をクリア
         self.po_info.count = 0
@@ -294,7 +307,7 @@ class MctsPlayer(BasePlayer):
         child_move = current_node.child_move
         if child_num == 1:
             print('bestmove', child_move[0].usi())
-            return
+            return child_move[0].usi() ,''
 
         # プレイアウトを繰り返す
         # 探索回数が閾値を超える, または探索が打ち切られたらループを抜ける
@@ -302,7 +315,7 @@ class MctsPlayer(BasePlayer):
             # 探索回数を1回増やす
             self.po_info.count += 1
             # 1回プレイアウトする
-            self.uct_search(self.board, self.current_root)
+            multiprocessing.Process(target = self.uct_search(self.board, self.current_root))
             # 探索を打ち切るか確認
             if self.interruption_check() or not self.node_hash.enough_size:
                 break
@@ -311,7 +324,7 @@ class MctsPlayer(BasePlayer):
         finish_time = time.time() - begin_time
 
         child_move_count = current_node.child_move_count
-        if self.board.move_number < 3:
+        if self.board.move_number < 6:
             # 訪問回数に応じた確率で手を選択する
             selected_index = np.random.choice(np.arange(child_num), p=child_move_count/sum(child_move_count))
         else:
@@ -333,7 +346,7 @@ class MctsPlayer(BasePlayer):
         # 閾値未満の場合投了
         if best_wp < RESIGN_THRESHOLD:
             print('bestmove resign')
-            return
+            return 'resign' ,''
 
         bestmove = child_move[selected_index]
 
@@ -341,7 +354,7 @@ class MctsPlayer(BasePlayer):
         if best_wp == 1.0:
             cp = 30000
         else:
-            cp = int(-math.log(1.0 / best_wp - 1.0) * 600)
+            cp = int(-math.log(1.0 / max((best_wp - 1.0),0.01)) * 600)
 
         print('info nps {} time {} nodes {} hashfull {} score cp {} pv {}'.format(
             int(current_node.move_count / finish_time),
@@ -351,96 +364,10 @@ class MctsPlayer(BasePlayer):
             cp, bestmove.usi()))
 
         print('bestmove', bestmove.usi())
-    
-
-
-
-    def select_move(self):
-        if self.board.is_game_over():
-            print('bestmove resign')
-            return 'resign'
-
-        # 探索情報をクリア
-        self.po_info.count = 0
-
-        # 古いハッシュを削除
-        self.node_hash.delete_old_hash(self.board, self.uct_node)
-
-        # 探索開始時刻の記録
-        begin_time = time.time()
-
-        # 探索回数の閾値を設定
-        self.po_info.halt = self.playout
-
-        # ルートノードの展開
-        self.current_root = self.expand_node(self.board)
-
-        # 候補手が1つの場合は、その手を返す
-        current_node = self.uct_node[self.current_root]
-        child_num = current_node.child_num
-        child_move = current_node.child_move
-        if child_num == 1:
-            # print('bestmove', child_move[0].usi())
-            return child_move[0].usi()
-
-        # プレイアウトを繰り返す
-        # 探索回数が閾値を超える, または探索が打ち切られたらループを抜ける
-        while self.po_info.count < self.po_info.halt:
-            # 探索回数を1回増やす
-            self.po_info.count += 1
-            # 1回プレイアウトする
-            self.uct_search(self.board, self.current_root)
-            # 探索を打ち切るか確認
-            if self.interruption_check() or not self.node_hash.enough_size:
-                break
-
-        # 探索にかかった時間を求める
-        finish_time = time.time() - begin_time
-
-        child_move_count = current_node.child_move_count
-        if self.board.move_number < 3:
-            # 訪問回数に応じた確率で手を選択する
-            selected_index = np.random.choice(np.arange(child_num), p=child_move_count/sum(child_move_count))
-        else:
-            # 訪問回数最大の手を選択する
-            selected_index = np.argmax(child_move_count)
-
-        child_win = current_node.child_win
-
-        #for debug
-        for i in range(child_num):
-            print('{:3}:{:5} move_count:{:4} nn_rate:{:.5f} win_rate:{:.5f}'.format(
-                i, child_move[i].usi(), child_move_count[i],
-                current_node.nnrate[i],
-                child_win[i] / child_move_count[i] if child_move_count[i] > 0 else 0))
-
-        # 選択した着手の勝率の算出
-        best_wp = child_win[selected_index] / child_move_count[selected_index]
-
-        #閾値未満の場合投了
-        if best_wp < RESIGN_THRESHOLD:
-            print('bestmove resign')
-            return
-
-        bestmove = child_move[selected_index]
-
-        # 勝率を評価値に変換
-        if best_wp == 1.0:
-            cp = 30000
-        else:
-            cp = int(-math.log(1.0 / best_wp - 1.0) * 600)
-
-        # print('info nps {} time {} nodes {} hashfull {} score cp {} pv {}'.format(
-        #     int(current_node.move_count / finish_time),
-        #     int(finish_time * 1000),
-        #     current_node.move_count,
-        #     int(self.node_hash.get_usage_rate() * 1000),
-        #     cp, bestmove.usi()))
-
-        return (bestmove.usi())
+        return bestmove.usi(), ''
 
 # if __name__=='__main__':
-    # print(os.getenvb())
-    # test = MctsPlayer()
-    # test.isready()
-    # test.go()
+
+#     test = MctsPlayer()
+#     test.isready()
+#     test.go()

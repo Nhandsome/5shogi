@@ -2,7 +2,7 @@ import numpy as p
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import multiprocessing
 import shogi
 import os
 
@@ -365,16 +365,16 @@ class ParallelMCTSPlayer(BasePlayer):
             print('bestmove', child_move[0].usi())
             return
 
-        # HAN 
-        temp_board = copy.deepcopy(self.board)
-        temp_moves = child_move
-        for t_move in temp_moves:
-            temp_board.push(t_move)
-            if temp_board.is_game_over():
-                print('bestmove', t_move.usi())
-                temp_board.pop()
-                return
-            temp_board.pop()
+        # # HAN 
+        # temp_board = copy.deepcopy(self.board)
+        # temp_moves = child_move
+        # for t_move in temp_moves:
+        #     temp_board.push(t_move)
+        #     if temp_board.is_game_over():
+        #         print('bestmove', t_move.usi())
+        #         temp_board.pop()
+        #         return
+        #     temp_board.pop()
 
         # 探索実行中フラグを設定
         self.running = True
