@@ -16,3 +16,5 @@ docs/_build/
 .DS_Store
 *.ipynb
 logs/
+*.pgn
+*.pickle
