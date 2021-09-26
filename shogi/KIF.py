@@ -33,11 +33,27 @@ if sys.version_info[0] == 2 or (sys.version_info[0] == 3 and sys.version_info[1]
 else:
     ordered_dict = dict
 
+KIFU_TO_SQUARE_NAMES = [
+    '１一', '１二', '１三', '１四', '１五', 
+    '２一', '２二', '２三', '２四', '２五', 
+    '３一', '３二', '３三', '３四', '３五',
+    '４一', '４二', '４三', '４四', '４五', 
+    '５一', '５二', '５三', '５四', '５五', 
+]
+
+KIFU_FROM_SQUARE_NAMES = [
+    '11', '12', '13', '14', '15', 
+    '21', '22', '23', '24', '25', 
+    '31', '32', '33', '34', '35', 
+    '41', '42', '43', '44', '45', 
+    '51', '52', '53', '54', '55', 
+]
+
 class ParserException(Exception):
     pass
 
 class Parser:
-    MOVE_RE = re.compile(r'\A *[0-9]+\s+(中断|投了|持将棋|先日手|詰み|切れ負け|反則勝ち|反則負け|(([１２３４５６７８９])([零一二三四五六七八九])|同　)([歩香桂銀金角飛玉と杏圭全馬龍])(打|(成?)\(([0-9])([0-9])\)))\s*(\([ /:0-9]+\))?\s*\Z')
+    MOVE_RE = re.compile(r'\A *[0-5]+\s+(中断|投了|持将棋|先日手|詰み|切れ負け|反則勝ち|反則負け|(([１２３４５])([零一二三四五])|同　)([歩銀金角飛玉と圭全馬龍])(打|(成?)\(([0-5])([0-5])\)))\s*(\([ /:0-5]+\))?\s*\Z')
 
     HANDYCAP_SFENS = {
         '平手': shogi.STARTING_SFEN,
@@ -187,7 +203,7 @@ class Parser:
                 # same position
                 to_square = last_to_square
             else:
-                to_field = 9 - shogi.NUMBER_JAPANESE_NUMBER_SYMBOLS.index(m.group(3))
+                to_field = 5 - shogi.NUMBER_JAPANESE_NUMBER_SYMBOLS.index(m.group(3))
                 to_rank = shogi.NUMBER_JAPANESE_KANJI_SYMBOLS.index(m.group(4)) - 1
                 to_square = to_rank * 5 + to_field
                 last_to_square = to_square
@@ -200,9 +216,9 @@ class Parser:
                     None
                 )
             else:
-                from_field = 9 - int(m.group(8))
+                from_field = 5 - int(m.group(8))
                 from_rank = int(m.group(9)) - 1
-                from_square = from_rank * 9 + from_field
+                from_square = from_rank * 5 + from_field
 
                 promotion = (m.group(7) == '成')
                 return (
@@ -308,3 +324,36 @@ class Parser:
 
         # NOTE: for the same interface with CSA parser
         return [summary]
+
+def move_to_kif(move, board):
+    prev_move = board.peek()
+    to_sq = shogi.move_to(move)
+    move_to = KIFU_TO_SQUARE_NAMES[to_sq]
+    if prev_move:
+        if shogi.move_to(prev_move) == to_sq:
+            move_to = "同　"
+    if not shogi.move_is_drop(move):
+        from_sq = shogi.move_from(move)
+        move_piece = shogi.PIECE_JAPANESE_SYMBOLS[board.pieces[from_sq]]
+        if move.promotion:
+            return '{}{}成({})'.format(
+                move_to,
+                move_piece,
+                KIFU_FROM_SQUARE_NAMES[from_sq],
+                )
+        else:
+            return '{}{}({})'.format(
+                move_to,
+                move_piece,
+                KIFU_FROM_SQUARE_NAMES[from_sq],
+                )
+    else:
+        move_piece = move.drop_piece_type
+        return '{}{}打'.format(
+            move_to,
+            move_piece
+            )
+
+
+# if __name__ == '__main__':
+#     move_to_kif('5a4a')

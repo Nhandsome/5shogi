@@ -194,25 +194,25 @@ def to_score(m):
             score = 100000
     return score
 
-def usi_info_to_csa_comment(board, info):
-    m = re_usi_info.match(info)
-    if m is None:
-        return None
+# def usi_info_to_csa_comment(board, info):
+#     m = re_usi_info.match(info)
+#     if m is None:
+#         return None
 
-    # score
-    score = to_score(m) * (1 - board.turn * 2)
+#     # score
+#     score = to_score(m) * (1 - board.turn * 2)
 
-    # pv
-    pv = []
-    board2 = copy.deepcopy(board)
-    for usi_move in m[3].split(' '):
-        move = board2.move_from_usi(usi_move)
-        if not board2.is_legal(move):
-            break
-        pv.append(CSA.COLOR_SYMBOLS[board2.turn] + move_to_csa(move))
-        board2.push(move)
+#     # pv
+#     pv = []
+#     board2 = copy.deepcopy(board)
+#     for usi_move in m[3].split(' '):
+#         move = board2.move_from_usi(usi_move)
+#         if not board2.is_legal(move):
+#             break
+#         pv.append(CSA.COLOR_SYMBOLS[board2.turn] + move_to_csa(move))
+#         board2.push(move)
 
-    return f"** {score} {' '.join(pv)}"
+#     return f"** {score} {' '.join(pv)}"
 
 def usi_info_to_score(info):
     m = re_usi_info.match(info)
@@ -658,6 +658,8 @@ if __name__ == '__main__':
 
     test1 = MctsPlayer()
     test2 = MctsPlayer()
-    main(test1, test2, debug=True, is_display=True, games=10)
+    options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/5_shogi_last_4_80_7_45332','temperature':100,'playout':100}
+    options_b2 = {'modelfile':'/Users/han/python-shogi/checkpoint/5_shogi_last_4_80_7_45332','temperature':100,'playout':100}
+    main(test1, test2,options_b1, options_b2, debug=True, is_display=True, games=10)
 
    

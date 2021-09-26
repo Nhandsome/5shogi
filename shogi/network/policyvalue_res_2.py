@@ -28,10 +28,11 @@ class ResNetBlock(nn.Module):
         return self.act(out + x)
 
 class PolicyValueResNetwork(nn.Module):
-    def __init__(self, blocks=4, channels=80, activation=nn.ReLU(), fc1=64):
+    def __init__(self, blocks=2, channels=80, activation=nn.ReLU(), fc1=64):
         super(PolicyValueResNetwork, self).__init__()
-        self.l1_1 = nn.Conv2d(in_channels=40, out_channels=channels, kernel_size=3, padding=1, stride=1, bias=False)
-        self.l1_2 = nn.Conv2d(in_channels=40, out_channels=channels, kernel_size=1, stride=1, bias=False)
+        self.l1_1 = nn.Conv2d(in_channels=20, out_channels=channels, kernel_size=3, padding=1, stride=1, bias=False)
+        self.l1_2 = nn.Conv2d(in_channels=20, out_channels=channels, kernel_size=1, stride=1, bias=False)
+        self.l2 = nn.Conv2d(in_channels=20, out_channels=channels, kernel_size=1, stride=1, bias=False)
         self.bn1 = nn.BatchNorm2d(channels)
         self.act = activation
 
@@ -45,10 +46,11 @@ class PolicyValueResNetwork(nn.Module):
         self.value_fn1 = nn.Linear(5*5*MOVE_DIRECTION_LABEL_NUM, fc1)
         self.value_fn2 = nn.Linear(fc1, 1)
     
-    def forward(self, x):
-        out1_1 = self.l1_1(x)
-        out1_2 = self.l1_2(x)
-        out1 = self.bn1(out1_1 + out1_2)
+    def forward(self, x1, x2):
+        out1_1 = self.l1_1(x1)
+        out1_2 = self.l1_2(x1)
+        out2 = self.l2(x2)
+        out1 = self.bn1(out1_1 + out1_2 + out2)
         out1 = self.act(out1)
 
         h = self.block(out1)
@@ -63,14 +65,17 @@ class PolicyValueResNetwork(nn.Module):
 
 
 if __name__=='__main__':
-    batch_size = 30
-    test_input = torch.randn((batch_size, 40, 5, 5))
-    print(f'TEST_INPUT SHAPE : {test_input.shape}')
+    batch_size = 2
+    test_input1 = torch.randn((batch_size, 20, 5, 5))
+    test_input2 = torch.randn((batch_size, 20, 5, 5))
+    print(f'TEST_INPUT SHAPE : {test_input1.shape}')
+    print(f'TEST_INPUT SHAPE : {test_input2.shape}')
 
     test_model = PolicyValueResNetwork()
 
-    y1, y2 = test_model(test_input)
+    y1, y2 = test_model(test_input1, test_input2)
     
     print(f'TEST_OUTPUT_1 SHAPE : {y1.shape}')
     print(f'TEST_OUTPUT_2 SHAPE : {y2.shape}')
+
     print(y2)

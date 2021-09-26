@@ -28,6 +28,7 @@ import collections
 from .Move import *
 from .Piece import *
 from .Consts import *
+# from .KIF import *
 
 PIECE_TYPES_WITHOUT_KING = [
     #        PAWN,      LANCE,      KNIGHT,      SILVER,
@@ -115,13 +116,13 @@ CSA_SQUARE_NAMES = [
     '55', '45', '35', '25', '15',
 ]
 
-# MOVE_SQUARE_NAMES = [
-#     '5a', '4a', '3a', '2a', '1a',
-#     '5b', '4b', '3b', '2b', '1b',
-#     '5c', '4c', '3c', '2c', '1c',
-#     '5d', '4d', '3d', '2d', '1d',
-#     '5e', '4e', '3e', '2e', '1e',
-# ]
+HASH_SQUARE_NAMES = [
+    20, 15, 10, 5, 0,
+    21, 16, 11, 6, 1,
+    22, 17, 12, 7, 2,
+    23, 18, 13, 8, 3,
+    24, 19, 14, 9, 4,
+]
 
 def file_index(square):
     return square % 5
@@ -142,6 +143,22 @@ def move_to_csa(move, board):
     csa_to = CSA_SQUARE_NAMES[SQUARE_NAMES.index(move_to)]
 
     return csa_from + csa_to, csa_piece
+
+def move_to(move):
+    usi = move.usi()
+    return SQUARE_NAMES.index(usi[2:4])
+
+def move_from(move):
+    usi = move.usi()
+    return SQUARE_NAMES.index(usi[0:2])
+
+def move_is_drop(move):
+    return True if move.drop_piece_type else False
+   
+
+def move_from_piece_type(usi):
+    return True
+
 
 
 BB_VOID = 0b0000000000000000000000000
@@ -1080,7 +1097,7 @@ class Board(object):
 
     def peek(self):
         '''Gets the last move from the move stack.'''
-        return self.move_stack[-1]
+        return self.move_stack[-1] if len(self.move_stack) > 0 else None
 
     def opponent(self):
 	    return BLACK if self.turn == WHITE else WHITE
@@ -1262,6 +1279,9 @@ class Board(object):
         self.push(move)
         return move
 
+    def move_from_csa(csa):
+        pass
+
     def kif_pieces_in_hand_str(self, color):
         builder = [[
             '先手の持駒：',
@@ -1422,6 +1442,46 @@ class Board(object):
             square = bit_scan(squares, square + 1)
 
         return zobrist_hash
+
+#  CAPTUREPIECETYPE(2**4)    PIECETYPE(2**4)     PRROMOTE(2/2**2)    
+# FROM(25/2**5)   TO(25/2**5    if under than 25, it's from hand)
+     
+    def move_hash(self, move):
+        pt_convert={
+            0:0,
+            1:1,
+            2:2,
+            3:5,
+            4:3,
+            5:4,
+            6:6,
+            7:7,
+            8:8,
+            9:9,
+            10:10
+        }   
+        if move.drop_piece_type:
+            from_sq =  pt_convert[move.drop_piece_type] + 24
+        else:
+            from_sq = HASH_SQUARE_NAMES[move.from_square]
+        to_sq = HASH_SQUARE_NAMES[move.to_square]
+        is_promote = move.promotion
+        if move.from_square is not None:
+            pt = pt_convert[self.pieces[move.from_square]]
+        else:
+            pt = 0
+
+        temp = self.pieces[move.to_square]
+        if temp > 8:
+            temp -= 5
+        elif temp > 6:
+            temp -= 6
+        else :
+            temp = temp
+        temp = pt_convert[temp]
+        capture_pt = temp if self.turn == 0 else temp + 6
+
+        return to_sq | from_sq << 5 | is_promote << 10 | pt << 12 | capture_pt << 16
 
 
 class PseudoLegalMoveGenerator(object):

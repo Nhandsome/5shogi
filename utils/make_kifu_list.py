@@ -2,7 +2,7 @@ import argparse
 import os
 import random
 
-def make_kifu(dir,filename,ratio=0.9):
+def make_kifu(dir,filename,ratio=1):
     kifu_list = []
     for root, dirs, files in os.walk(dir):
         for file in files:
@@ -32,7 +32,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('dir', type=str)
     parser.add_argument('filename', type=str)
-    parser.add_argument('--ratio', type=float, default=0.9)
+    parser.add_argument('--ratio', type=float, default=1)
     args = parser.parse_args()
 
     kifu_list = []

@@ -6,7 +6,7 @@ import multiprocessing
 
 from shogi.common import *
 from shogi.features import *
-from shogi.network.policyvalue_res import *
+from shogi.network.policyvalue_res_2 import *
 from shogi.player.base_player import *
 from shogi.uct.uct_node import *
 
@@ -24,7 +24,7 @@ else:
 C_PUCT = 1.0
 # 1手当たりのプレイアウト数
 # ランダムにゲームを進み、結果でノードを評価
-CONST_PLAYOUT = 300
+CONST_PLAYOUT = 100
 # 投了する勝率の閾値
 RESIGN_THRESHOLD = 0
 # 温度パラメータ
@@ -57,7 +57,7 @@ class MctsPlayer(BasePlayer):
         # モデルファイルのパス
         # 学習済みのモデルを呼び出す
         self.name = 'mctsplayer'
-        self.modelfile = r'/Users/han/python-shogi/checkpoint/best/bast_pv_2'
+        self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_good_test_4_80_6_24012'
         self.model = None # モデル
 
         # ノードの情報
@@ -210,15 +210,16 @@ class MctsPlayer(BasePlayer):
     # 現状況を学習したモデルで評価、情報更新
     def eval_node(self, board, index):
         # 現状況でのFeatureを生成
-        eval_features = [make_input_features_from_board(board)]
+        eval_features1, eval_features2 = make_input_features_from_board_2(board)
         
         # 学習モデルを用いた予測
-        x = torch.from_numpy(np.array(eval_features, dtype=np.float32)).to(device)
+        x1 = torch.from_numpy(np.array([eval_features1], dtype=np.float32)).to(device)
+        x2 = torch.from_numpy(np.array([eval_features2], dtype=np.float32)).to(device)
         with torch.no_grad():
-            y1, y2 = self.model(x)
+            y1, y2 = self.model(x1, x2)
     
             logits = y1.data[0].to('cpu')
-            value = F.softmax(y2,dim=1).data[0].to('cpu')
+            value = y2.to('cpu')
 
         current_node = self.uct_node[index]
         child_num = current_node.child_num
@@ -309,6 +310,17 @@ class MctsPlayer(BasePlayer):
             print('bestmove', child_move[0].usi())
             return child_move[0].usi() ,''
 
+        # HAN 
+        temp_board = copy.deepcopy(self.board)
+        temp_moves = child_move
+        for t_move in temp_moves:
+            temp_board.push(t_move)
+            if temp_board.is_game_over() and temp_board.is_checkmate():
+                print('bestmove', t_move.usi())
+                temp_board.pop()
+                return t_move.usi(), ''
+            temp_board.pop()
+
         # プレイアウトを繰り返す
         # 探索回数が閾値を超える, または探索が打ち切られたらループを抜ける
         while self.po_info.count < self.po_info.halt:
@@ -366,8 +378,8 @@ class MctsPlayer(BasePlayer):
         print('bestmove', bestmove.usi())
         return bestmove.usi(), ''
 
-# if __name__=='__main__':
+if __name__=='__main__':
 
-#     test = MctsPlayer()
-#     test.isready()
-#     test.go()
+    test = MctsPlayer()
+    test.isready()
+    test.go()

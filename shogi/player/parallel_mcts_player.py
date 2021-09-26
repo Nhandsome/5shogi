@@ -8,7 +8,7 @@ import os
 
 from shogi.common import *
 from shogi.features import *
-from shogi.network.policyvalue_res import *
+from shogi.network.policyvalue_res_2 import *
 from shogi.player.base_player import *
 from shogi.uct.uct_node import *
 
@@ -25,7 +25,7 @@ else:
 # UCBのボーナス項の定数
 C_PUCT = 1.0
 # 1手当たりのプレイアウト数
-CONST_PLAYOUT = 300
+CONST_PLAYOUT = 100
 # 投了する勝率の閾値
 RESIGN_THRESHOLD = 0
 # 温度パラメータ
@@ -58,7 +58,7 @@ class ParallelMCTSPlayer(BasePlayer):
     def __init__(self):
         super().__init__()
         # モデルファイルのパス
-        self.modelfile = r'/Users/han/python-shogi/checkpoint/best/bast_pv_2'
+        self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_last_4_80_19_123044'
         self.model = None # モデル
 
         # ノードの情報
@@ -79,9 +79,11 @@ class ParallelMCTSPlayer(BasePlayer):
 
         # キュー
         self.current_queue_index = 0
-        self.features = [[], []]
+        self.features1 = [[], []]
+        self.features2 = [[], []]
         self.hash_index_queues = [[], []]
-        self.current_features = self.features[self.current_queue_index]
+        self.current_features1 = self.features1[self.current_queue_index]
+        self.current_features2 = self.features2[self.current_queue_index]
         self.current_hash_index_queue = self.hash_index_queues[self.current_queue_index]
 
         # スレッド数
@@ -132,7 +134,9 @@ class ParallelMCTSPlayer(BasePlayer):
 
         # 評価の要求をキューに追加
         if child_num > 0:
-            self.current_features.append(make_input_features_from_board(board))
+            features1, features2 = make_input_features_from_board_2(board)
+            self.current_features1.append(features1)
+            self.current_features2.append(features2)
             self.current_hash_index_queue.append(index)
         else:
             current_node.value_win = 0.0
@@ -218,6 +222,7 @@ class ParallelMCTSPlayer(BasePlayer):
 
             # valueを勝敗として返す
             result = 1 - child_node.value_win
+            
         else:
             # 現在見ているノードのロックを解除
             self.lock_node[current].release()
@@ -238,9 +243,11 @@ class ParallelMCTSPlayer(BasePlayer):
     def clear_eval_queue(self):
         self.current_queue_index = 0
         for i in range(2):
-            self.features[i].clear()
+            self.features1[i].clear()
+            self.features2[i].clear()
             self.hash_index_queues[i].clear()
-        self.current_features = self.features[self.current_queue_index]
+        self.current_features1 = self.features1[self.current_queue_index]
+        self.current_features2 = self.features2[self.current_queue_index]   
         self.current_hash_index_queue = self.hash_index_queues[self.current_queue_index]
 
     # ノードを評価
@@ -265,22 +272,26 @@ class ParallelMCTSPlayer(BasePlayer):
 
             enough_batch_size = False
             # 現在のキューを保存
-            eval_features = self.current_features
+            eval_features1 = self.current_features1
+            eval_features2 = self.current_features2
             eval_hash_index_queue = self.current_hash_index_queue
             # カレントキューを入れ替える
             self.current_queue_index = self.current_queue_index ^ 1
-            self.current_features = self.features[self.current_queue_index]
+            self.current_features1 = self.features1[self.current_queue_index]
+            self.current_features2 = self.features2[self.current_queue_index]
             self.current_hash_index_queue = self.hash_index_queues[self.current_queue_index]
-            self.current_features.clear()
+            self.current_features1.clear()
+            self.current_features2.clear()
             self.current_hash_index_queue.clear()
             self.lock_expand.release()
-
-            x = torch.from_numpy(np.array(eval_features, dtype=np.float32)).to(device)
+        
+            x1 = torch.from_numpy(np.array(eval_features1, dtype=np.float32)).to(device)
+            x2 = torch.from_numpy(np.array(eval_features2, dtype=np.float32)).to(device)
             with torch.no_grad():
-                y1, y2 = self.model(x)
+                y1, y2 = self.model(x1, x2)
         
                 logits_batch = y1.data.to('cpu')
-                values_batch = F.softmax(y2,dim=1).data.to('cpu')
+                values_batch = y2.to('cpu')
 
             for index, logits, value in zip(eval_hash_index_queue, logits_batch, values_batch):
                 self.lock_node[index].acquire()
@@ -365,16 +376,16 @@ class ParallelMCTSPlayer(BasePlayer):
             print('bestmove', child_move[0].usi())
             return
 
-        # # HAN 
-        # temp_board = copy.deepcopy(self.board)
-        # temp_moves = child_move
-        # for t_move in temp_moves:
-        #     temp_board.push(t_move)
-        #     if temp_board.is_game_over():
-        #         print('bestmove', t_move.usi())
-        #         temp_board.pop()
-        #         return
-        #     temp_board.pop()
+        # HAN 
+        temp_board = copy.deepcopy(self.board)
+        temp_moves = child_move
+        for t_move in temp_moves:
+            temp_board.push(t_move)
+            if temp_board.is_game_over():
+                print('bestmove', t_move.usi())
+                temp_board.pop()
+                return
+            temp_board.pop()
 
         # 探索実行中フラグを設定
         self.running = True
@@ -419,7 +430,7 @@ class ParallelMCTSPlayer(BasePlayer):
             print('{:3}:{:5} move_count:{:4} nn_rate:{:.5f} win_rate:{:.5f}'.format(
                 i, child_move[i].usi(), child_move_count[i],
                 current_node.nnrate[i],
-                child_win[i] / child_move_count[i] if child_move_count[i] > 0 else 0))
+                child_win[i] / child_move_count[i]))
 
         # 選択した着手の勝率の算出
         best_wp = child_win[selected_index] / child_move_count[selected_index]
@@ -444,3 +455,14 @@ class ParallelMCTSPlayer(BasePlayer):
             cp, bestmove.usi()))
 
         print('bestmove', bestmove.usi())
+
+# if __name__=='__main__':
+
+#     test = ParallelMCTSPlayer()
+#     temp = shogi.Board('BSR2/3S1/k3K/5/sSGgp b b 207')
+#     test.board = temp
+#     print(temp)
+#     print([m for m in temp.legal_moves])
+#     test.isready()
+#     for i in range(100):
+#         test.go()

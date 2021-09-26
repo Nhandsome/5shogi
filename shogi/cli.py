@@ -661,15 +661,14 @@ if __name__ == '__main__':
     import random
     
         
-    temp_1 = str(random.sample(range(10, 1000, 10),k=1)[0])
-    play_1 = str(random.sample(range(50, 100, 10),k=1)[0])
-    
-    engine1 = '/Users/han/python-shogi/parallel_mcts_player_1.sh'
-    options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_5','temperature':temp_1,'playout':play_1}
-    engine2 = '/Users/han/python-shogi/parallel_mcts_player_2.sh'
-    options_b2 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_5','temperature':temp_1,'playout':play_1}
+    # engine1 = '/Users/han/python-shogi/parallel_mcts_player_1.sh'
+    # options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_2','temperature':100,'playout':100}
+    # engine2 = '/Users/han/python-shogi/parallel_mcts_player_2.sh'
+    # options_b2 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_2','temperature':100,'playout':100}
 
-    main(engine1, engine2, options_b1, options_b2,games=1,is_display=True)
+    # test = Engine(engine1)
+    # test.isready()
+    # test.go()
 
     # for r in range(args.round):
 
