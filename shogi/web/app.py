@@ -515,11 +515,11 @@ if __name__ == '__main__':
 
     # args.engine1 = './parallel_mcts_player_1.sh'
     # options_b1 = {'modelfile':'./checkpoint/best/best_pv_6','temperature':100,'playout':100}
-    args.engine2 = './parallel_mcts_player_2.sh'
-    options_b1 = {'modelfile':'./checkpoint/best/best_pv_6','temperature':100,'playout':100}
+    # args.engine2 = './parallel_mcts_player_2.sh'
+    options_b2 = {'modelfile':'./checkpoint/best/best_pv_6','temperature':100,'playout':100}
     # args.engine1 = 'human'
     # # options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_2','temperature':100,'playout':100}
-    args.engine1 = 'human'
+    # args.engine1 = 'human'
     # options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_2','temperature':100,'playout':100}    
 
     # for i, kvs in enumerate([options.split(',') for options in (args.options1, args.options2)]):
