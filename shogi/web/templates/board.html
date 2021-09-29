@@ -183,7 +183,7 @@
                     updateBoard(moves.length);
                     updateTableMoves();
                     selectMoveNumber(moves.length);
-                    drawEvalGraph();
+                    //drawEvalGraph();
                 });
             }
             if (moves.length > 0 && moves[moves.length - 1]["move"] == 0) {
@@ -220,7 +220,7 @@
                 updateBoard(moves.length);
                 updateTableMoves();
                 selectMoveNumber(moves.length);
-                drawEvalGraph();
+                //drawEvalGraph();
                 if (moves.length > 0 && moves[moves.length - 1]["move"] == 0) {
                     $("#autoupdate").prop('checked', false).change();
                 }
@@ -296,7 +296,7 @@
             updateNames();
             updateBoard(number);
             updateTableMoves();
-            drawEvalGraph();
+            //drawEvalGraph();
 
             $("#btn-first").click(function() {
                 selectMoveNumber(0);
@@ -381,37 +381,6 @@
             <div id="update" class="col d-none">
                 <button type="button" id="btn-update" class="btn btn-light">更新</button>
                 <input type="checkbox" id="autoupdate" name="autoupdate"><label for="autoupdate">自動更新</label>
-            </div>
-        </div>
-        <div class="row mt-1">
-            <div class="col border" style="height: 60px; overflow-y: scroll;">
-                <table class="table table-sm small table-borderless" style="height: 40px;">
-                    <thead>
-                        <tr>
-                            <td style="width: 6em;">評価値</td>
-                            <td>読み筋</td>
-                        </tr>
-                    </thead>
-                    <tbody><tr id="black-comment"></tr></tbody>
-                </table>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col border" style="height: 60px; overflow-y:scroll;">
-                <table class="table table-sm small table-borderless" style="height: 40px;">
-                    <thead>
-                        <tr>
-                            <td style="width: 6em;">評価値</td>
-                            <td>読み筋</td>
-                        </tr>
-                    </thead>
-                    <tbody><tr id="white-comment"></tr></tbody>
-                </table>
-            </div>
-        </div>
-        <div class="row mt-1">
-            <div class="col">
-                <canvas id="eval-graph" width="537" height="160"></canvas>
             </div>
         </div>
     </div>

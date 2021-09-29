@@ -17,6 +17,7 @@ from shogi import CSA
 # from shogi import PGN
 from shogi.elo import Elo
 from shogi.player.mcts_player import *
+from shogi.player.parallel_mcts_player import *
 
 import subprocess
 import os.path
@@ -658,8 +659,8 @@ if __name__ == '__main__':
 
     test1 = MctsPlayer()
     test2 = MctsPlayer()
-    options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/5_shogi_last_4_80_7_45332','temperature':100,'playout':100}
-    options_b2 = {'modelfile':'/Users/han/python-shogi/checkpoint/5_shogi_last_4_80_7_45332','temperature':100,'playout':100}
-    main(test1, test2,options_b1, options_b2, debug=True, is_display=True, games=10)
+    options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_1','temperature':100,'playout':100}
+    options_b2 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_8','temperature':100,'playout':100}
+    main(test1, test2,options_b1, options_b2, debug=False, is_display=False, games=50)
 
    

@@ -60,7 +60,8 @@ class ParallelMCTSPlayer(BasePlayer):
         # モデルファイルのパス
         self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_last_4_80_19_123044'
         self.model = None # モデル
-
+        
+        self.name = 'ParallelMCTSPlayer'
         # ノードの情報
         self.node_hash = NodeHash()
         self.uct_node = [UctNode() for _ in range(UCT_HASH_SIZE)]

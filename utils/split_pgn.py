@@ -120,7 +120,7 @@ parser.add_argument('--uniq', action='store_true')
 args = parser.parse_args()
 
 args.pgn = ['./data/pgn/games_7.pgn']
-args.outprefix = './data/pgns/pgn_2'
+args.outprefix = './data/pgn_3/'
 
 pgns = defaultdict(list)
 stats = defaultdict(lambda: defaultdict(lambda: [0, 0, 0, 0, 0, 0]))

@@ -187,8 +187,8 @@ class Board {
 		}
 
 		for (let c = 0; c < 2; c++) {
-			const x = c == BLACK ? 134 : -16;
-			const y = c == BLACK ? 190 : -10;
+			const x = c == BLACK ? 140 : -16;
+			const y = c == BLACK ? 118 : -10;
 			const color_text = c == BLACK ? "black" : "white";
 			let scale = 1;
 			if (hand_pieces[c].length + 1 > 13)
