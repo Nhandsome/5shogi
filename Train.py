@@ -15,10 +15,8 @@ import random
 import numpy as np
 import loggers as lg
 
-if os.getcwd() == '/Users/han/python-shogi':
-    device = 'cpu'
-else:
-    device = 'cuda' if torch.cuda.is_available else 'cpu'
+
+device = 'cuda' if torch.cuda.is_available else 'cpu'
 
 def mini_batch(positions, i, batchsize):
     mini_batch_data = []

@@ -19,6 +19,7 @@ class Engine:
     def __init__(self, cmd, connect=True, debug=True):
         self.cmd = cmd
         self.debug = debug
+        self.name = 'AI_SHOGI'
         if connect:
             self.connect()
         else:
@@ -28,12 +29,13 @@ class Engine:
     def connect(self, listener=None):
         if self.debug: listener = print
         self.proc = subprocess.Popen([self.cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(self.cmd))
-
+        
         cmd = 'usi'
         if listener:
             listener(cmd)
         self.proc.stdin.write(cmd.encode('ascii') + b'\n')
         self.proc.stdin.flush()
+        
 
         while True:
             self.proc.stdout.flush()
@@ -478,11 +480,11 @@ def run(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyom
     server = make_server('localhost', port, app)
     server.serve_forever()
 
-def colab(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=256, csa=None):
+def colab(engine1=None, engine2=None, options1={}, options2={}, names=None, byoyomi=None, time=None, inc=None, draw=100, csa=None):
     from multiprocessing import Process
     import portpicker
     from google.colab import output
-
+    
     global proc
     if 'proc' in globals():
         proc.terminate()
@@ -511,28 +513,31 @@ if __name__ == '__main__':
     parser.add_argument('--port', type=int, default=8001)
     args = parser.parse_args()
 
-    options_list = [{}, {}]
+#     options_list = [{}, {}]
 
-    # args.engine1 = './parallel_mcts_player_1.sh'
-    # options_b1 = {'modelfile':'./checkpoint/best/best_pv_6','temperature':100,'playout':100}
-    # args.engine2 = './parallel_mcts_player_2.sh'
-    options_b2 = {'modelfile':'./checkpoint/best/best_pv_6','temperature':100,'playout':100}
-    # args.engine1 = 'human'
-    # # options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_2','temperature':100,'playout':100}
-    # args.engine1 = 'human'
-    # options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_2','temperature':100,'playout':100}    
+#     args.engine1 = '/content/drive/MyDrive/5shogi_nhand/parallel_mcts_player_1.sh'
+#     options_b1 = {'modelfile':'/content/drive/MyDrive/5shogi_nhand/checkpoint/best/best_pv_4','temperature':100,'playout':200}
+#     args.engine2 = '/content/drive/MyDrive/5shogi_nhand/parallel_mcts_player_2.sh'
+#     options_b2 = {'modelfile':'/content/drive/MyDrive/5shogi_nhand/checkpoint/best/best_pv_6','temperature':100,'playout':100}
 
-    # for i, kvs in enumerate([options.split(',') for options in (args.options1, args.options2)]):
-    #     if len(kvs) == 1 and kvs[0] == '':
-    #         continue
-    #     for kv_str in kvs:
-    #         kv = kv_str.split(':', 1)
-    #         if len(kv) != 2:
-    #             raise ValueError('options{}'.format(i + 1))
-    #         options_list[i][kv[0]] = kv[1]
+#     # args.engine1 = 'human'
+# #     # # options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_2','temperature':100,'playout':100}
+# #     # args.engine2 = 'human'
+# #     # options_b1 = {'modelfile':'/Users/han/python-shogi/checkpoint/best/best_pv_2','temperature':100,'playout':100}    
 
-    run(engine1=args.engine1, engine2=args.engine2,
-        options1=options_list[0], options2=options_list[1],
-        names=[args.name1, args.name2],
-        byoyomi=args.byoyomi, time=args.time, inc=args.inc, draw=args.draw,
-        csa=args.csa, port=args.port)
+# #     # for i, kvs in enumerate([options.split(',') for options in (args.options1, args.options2)]):
+# #     #     if len(kvs) == 1 and kvs[0] == '':
+# #     #         continue
+# #     #     for kv_str in kvs:
+# #     #         kv = kv_str.split(':', 1)
+# #     #         if len(kv) != 2:
+# #     #             raise ValueError('options{}'.format(i + 1))
+# #     #         options_list[i][kv[0]] = kv[1]
+
+# #     # run(engine1=args.engine1, engine2=args.engine2,
+# #     #     options1=options_list[0], options2=options_list[1],
+# #     #     names=[args.name1, args.name2],
+# #     #     byoyomi=args.byoyomi, time=args.time, inc=args.inc, draw=args.draw,
+# #     #     csa=args.csa, port=args.port)
+
+#     colab(args.engine1, args.engine2,options2=options_b2)

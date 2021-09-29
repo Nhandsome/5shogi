@@ -17,11 +17,8 @@ from threading import Thread, Lock
 import time
 import copy
 
-if os.getcwd() == '/Users/han/python-shogi':
-    device = 'cpu'
-else:
-    device = 'cuda' if torch.cuda.is_available else 'cpu'
-# device = 'cpu'
+
+device = 'cuda' if torch.cuda.is_available else 'cpu'
 
 # UCBのボーナス項の定数
 C_PUCT = 1.0
@@ -59,7 +56,7 @@ class ParallelMCTSPlayer(BasePlayer):
     def __init__(self):
         super().__init__()
         # モデルファイルのパス
-        self.modelfile = r'/Users/han/python-shogi/checkpoint/5_shogi_last_4_80_19_123044'
+        self.modelfile = r'/content/5shogi_nhand/checkpoint/best/best_pv_6'
         self.model = None # モデル
         
         self.name = 'ParallelMCTSPlayer'
