@@ -17,10 +17,11 @@ from threading import Thread, Lock
 import time
 import copy
 
-if os.getcwd() == '/Users/han/python-shogi':
-    device = 'cpu'
-else:
-    device = 'cuda' if torch.cuda.is_available else 'cpu'
+# if os.getcwd() == '/Users/han/python-shogi':
+#     device = 'cpu'
+# else:
+#     device = 'cuda' if torch.cuda.is_available else 'cpu'
+device = 'cpu'
 
 # UCBのボーナス項の定数
 C_PUCT = 1.0
