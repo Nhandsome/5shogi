@@ -54,7 +54,7 @@ class PlayoutInfo:
         self.count = 0 # 現在の探索回数
 
 class ParallelMCTSPlayer(BasePlayer):
-    def __init__(self, device='cpu'):
+    def __init__(self, device = 'cuda' if torch.cuda.is_available else 'cpu'):
         super().__init__()
         # モデルファイルのパス
         self.modelfile = r'./checkpoint/best/best_pv_25'
